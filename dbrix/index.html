@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DBRIX - Course Home</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #121a2d;
+        --panel-2: #1a243d;
+        --text: #edf2ff;
+        --muted: #a7b5d6;
+        --accent: #5eead4;
+        --accent-2: #60a5fa;
+        --line: rgba(255, 255, 255, 0.08);
+        --shadow: rgba(0, 0, 0, 0.28);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(180deg, #070d1b 0%, #101a2f 100%);
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .container {
+        width: min(1200px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(11, 16, 32, 0.82);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 72px;
+        gap: 20px;
+      }
+
+      .brand {
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .nav-links a {
+        color: var(--muted);
+        padding: 9px 12px;
+        border-radius: 999px;
+        transition: 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+        background: rgba(255,255,255,0.04);
+      }
+
+      .hero {
+        padding: 72px 0 34px;
+      }
+
+      .hero-inner {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 28px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(94, 234, 212, 0.12);
+        border: 1px solid rgba(94, 234, 212, 0.28);
+        color: var(--accent);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(2.3rem, 4vw, 4rem);
+        line-height: 1.05;
+      }
+
+      .hero p {
+        color: var(--muted);
+        font-size: 1.08rem;
+        line-height: 1.7;
+        margin: 0;
+        max-width: 62ch;
+      }
+
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 26px;
+      }
+
+      .stat {
+        min-width: 140px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.02);
+        border-radius: 14px;
+        padding: 16px 18px;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .hero-card {
+        background: linear-gradient(145deg, rgba(96, 165, 250, 0.12), rgba(94, 234, 212, 0.08));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: 0 24px 45px var(--shadow);
+      }
+
+      .hero-card h3 {
+        margin: 0 0 14px;
+        font-size: 1.2rem;
+      }
+
+      .quick-links {
+        display: grid;
+        gap: 12px;
+      }
+
+      .quick-links a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(17, 24, 39, 0.8);
+        border: 1px solid rgba(255,255,255,0.06);
+        color: var(--text);
+      }
+
+      .quick-links a:hover {
+        transform: translateY(-1px);
+        border-color: rgba(94, 234, 212, 0.42);
+      }
+
+      main {
+        padding-bottom: 70px;
+      }
+
+      .section {
+        padding-top: 30px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .section-header h2 {
+        margin: 0;
+        font-size: clamp(1.5rem, 2vw, 2.2rem);
+      }
+
+      .section-header span {
+        color: var(--muted);
+        font-size: 0.96rem;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: rgba(18, 26, 45, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 18px 30px rgba(0,0,0,0.12);
+      }
+
+      .card-header {
+        padding: 20px 20px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .card-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .card-body {
+        padding: 16px 20px 20px;
+      }
+
+      .card-body ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .card-body li {
+        line-height: 1.5;
+      }
+
+      .card-body a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #dfe9ff;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.02);
+        transition: 0.2s ease;
+      }
+
+      .card-body a:hover {
+        border-color: rgba(94,234,212,0.3);
+        background: rgba(94,234,212,0.06);
+      }
+
+      .section-tag {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 840px) {
+        .hero-inner {
+          grid-template-columns: 1fr;
+        }
+
+        .nav {
+          flex-direction: column;
+          justify-content: center;
+          padding: 18px 0;
+        }
+
+        .section-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container nav">
+        <div class="brand">DBRIX</div>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="#00-generative-ai-fundamentals">Generative AI</a>
+          <a href="#01-building-rag-agents-with-agent-bricks">RAG Agents</a>
+          <a href="#02-building-agentic-applications-on-databricks">Agentic Apps</a>
+          <a href="#03-agent-evaluation-on-databricks">Evaluation</a>
+          <a href="#04-deploying-and-monitoring-agent-applications-on-databricks">Deployment</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container hero-inner">
+        <div>
+          <div class="eyebrow">Databricks AI learning path</div>
+          <h1>Course notes and lecture deck hub</h1>
+          <p>
+            This page is the landing hub for the Databricks learning modules in this repository.
+            Use the navigation below to jump into each course section and open the individual HTML lecture files.
+          </p>
+
+          <div class="stats">
+            <div class="stat">
+              <strong>5</strong>
+              <span>Core sections</span>
+            </div>
+            <div class="stat">
+              <strong>20+</strong>
+              <span>Lecture files</span>
+            </div>
+            <div class="stat">
+              <strong>HTML</strong>
+              <span>Study decks</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <h3>Quick jump</h3>
+          <div class="quick-links">
+            <a href="00.generative-ai-fundamentals/M01-Lecture_Introduction_to_Generative_AI.html">Introduction to Generative AI <span>→</span></a>
+            <a href="01.building-rag-agents-with-agent-bricks/01-Lecture_Retrieval_Agents_and_Lakebase_Search_on_Databricks.html">Retrieval Agents on Databricks <span>→</span></a>
+            <a href="03.agent-evaluation-on-databricks/1.1-Lecture_The_Challenge_of_Evaluating_AI_Agents.html">Evaluating AI Agents <span>→</span></a>
+            <a href="04.deploying-and-monitoring-agent-applications-on-databricks/1-Lecture_Agent_Deployment_on_Databricks.html">Agent Deployment <span>→</span></a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <main class="container">
+      <section id="00-generative-ai-fundamentals" class="section">
+        <div class="section-header">
+          <h2>00. Generative AI Fundamentals</h2>
+          <span>Foundations and practical AI adoption</span>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-header">
+              <h3>Section folder</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="00.generative-ai-fundamentals/">Open section folder →</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Lecture notes</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="00.generative-ai-fundamentals/M01-Lecture_Introduction_to_Generative_AI.html">M01 - Introduction to Generative AI</a></li>
+                <li><a href="00.generative-ai-fundamentals/M02-Lecture_Finding_Success_with_Generative_AI.html">M02 - Finding Success with Generative AI</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="01-building-rag-agents-with-agent-bricks" class="section">
+        <div class="section-header">
+          <h2>01. Building RAG Agents with Agent Bricks</h2>
+          <span>Retrieval, search, parsing, and document workflows</span>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-header">
+              <h3>Section folder</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="01.building-rag-agents-with-agent-bricks/">Open section folder →</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Lecture files</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="01.building-rag-agents-with-agent-bricks/01-Lecture_Retrieval_Agents_and_Lakebase_Search_on_Databricks.html">01 - Retrieval Agents and Lakebase Search</a></li>
+                <li><a href="01.building-rag-agents-with-agent-bricks/04-Lecture_Document_Parsing_and_Chunking_Strategies.html">04 - Document Parsing and Chunking</a></li>
+                <li><a href="01.building-rag-agents-with-agent-bricks/06-Lecture_AI_Search_on_Databricks.html">06 - AI Search on Databricks</a></li>
+                <li><a href="01.building-rag-agents-with-agent-bricks/08-Lecture_APPENDIX.html">08 - Appendix</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="02-building-agentic-applications-on-databricks" class="section">
+        <div class="section-header">
+          <h2>02. Building Agentic Applications on Databricks</h2>
+          <span>Multi-agent architecture, governance, and AI tooling</span>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-header">
+              <h3>Section folder</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="02.building-agentic-applications-on-databricks/">Open section folder →</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Lecture files</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="02.building-agentic-applications-on-databricks/01-Lecture_Agents_MCP_and_AI_Governance_on_Databricks.html">01 - Agents, MCP, and AI Governance</a></li>
+                <li><a href="02.building-agentic-applications-on-databricks/04-Lecture_Building_Agents_with_the_OpenAI_Agents_SDK_and_MLflow.html">04 - OpenAI Agents SDK + MLflow</a></li>
+                <li><a href="02.building-agentic-applications-on-databricks/07-Lecture_Agent_Bricks_and_Genie.html">07 - Agent Bricks and Genie</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="03-agent-evaluation-on-databricks" class="section">
+        <div class="section-header">
+          <h2>03. Agent Evaluation on Databricks</h2>
+          <span>Judges, evaluation strategies, and monitoring techniques</span>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-header">
+              <h3>Section folder</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="03.agent-evaluation-on-databricks/">Open section folder →</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Lecture files</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="03.agent-evaluation-on-databricks/1.1-Lecture_The_Challenge_of_Evaluating_AI_Agents.html">1.1 - Challenge of Evaluating AI Agents</a></li>
+                <li><a href="03.agent-evaluation-on-databricks/1.3-Lecture_MLflow's_Evaluation_Framework.html">1.3 - MLflow Evaluation Framework</a></li>
+                <li><a href="03.agent-evaluation-on-databricks/2.1-Lecture_Built-In_Judges.html">2.1 - Built-In Judges</a></li>
+                <li><a href="03.agent-evaluation-on-databricks/2.3-Lecture_Guideline_Judges.html">2.3 - Guideline Judges</a></li>
+                <li><a href="03.agent-evaluation-on-databricks/2.5-Lecture_Custom_Judges_and_Feedback.html">2.5 - Custom Judges and Feedback</a></li>
+                <li><a href="03.agent-evaluation-on-databricks/3.1-Lecture_Offline_vs_Online_Evaluation_Strategies.html">3.1 - Offline vs Online Evaluation</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="04-deploying-and-monitoring-agent-applications-on-databricks" class="section">
+        <div class="section-header">
+          <h2>04. Deploying and Monitoring Agent Applications on Databricks</h2>
+          <span>Production deployment, observability, and monitoring</span>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-header">
+              <h3>Section folder</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="04.deploying-and-monitoring-agent-applications-on-databricks/">Open section folder →</a></li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Lecture files</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><a href="04.deploying-and-monitoring-agent-applications-on-databricks/1-Lecture_Agent_Deployment_on_Databricks.html">1 - Agent Deployment on Databricks</a></li>
+                <li><a href="04.deploying-and-monitoring-agent-applications-on-databricks/3-Lecture_Tool_Integration_and_Observability.html">3 - Tool Integration and Observability</a></li>
+                <li><a href="04.deploying-and-monitoring-agent-applications-on-databricks/5-Lecture_Production_Evaluation_and_Monitoring.html">5 - Production Evaluation and Monitoring</a></li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <p class="meta">Tip: open any lecture file in a browser to view the full presentation and follow the course flow from idea to production.</p>
+    </main>
+  </body>
+</html>

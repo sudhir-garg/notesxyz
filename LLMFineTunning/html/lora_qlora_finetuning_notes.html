@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A detailed, blog-style guide to LoRA and QLoRA fine-tuning, including low-rank matrix mathematics, rank selection, memory trade-offs, and a Hugging Face code walkthrough.">
+<title>LoRA &amp; QLoRA — The Mathematics of Parameter-Efficient Fine-Tuning</title>
+<style>
+:root{--ink:#182235;--muted:#64748b;--paper:#f5f7fb;--panel:#fff;--line:#e2e8f0;--brand:#3157c8;--brand2:#6d5ce8;--teal:#0f8b8d;--amber:#a85b08;--red:#b93838;--green:#18794e;--soft-blue:#eef3ff;--soft-purple:#f3f0ff;--soft-teal:#eaf8f6;--soft-amber:#fff6e8;--shadow:0 14px 36px rgba(30,45,80,.08);--mono:#101827}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:26px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}.shell{max-width:1440px;margin:auto;padding:28px 26px 70px}.hero{position:relative;overflow:hidden;padding:48px 52px;border-radius:28px;color:white;background:linear-gradient(120deg,#14254d 0%,#263d84 48%,#5848a8 100%);box-shadow:var(--shadow)}.hero:before,.hero:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.13);border-radius:50%;pointer-events:none}.hero:before{width:440px;height:440px;right:-110px;top:-220px}.hero:after{width:310px;height:310px;right:80px;bottom:-240px}.eyebrow{font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#cbd7ff}.hero h1{font-size:clamp(2.15rem,4.5vw,3.65rem);line-height:1.08;max-width:850px;margin:12px 0 18px;letter-spacing:-.04em}.hero p{color:#e2e9ff;max-width:820px;font-size:1.08rem;margin:0}.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:24px}.chip{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);padding:6px 11px;border-radius:999px;font-size:.78rem;color:#f3f5ff}.layout{display:grid;grid-template-columns:265px minmax(0,1fr);gap:28px;align-items:start;margin-top:28px}.sidebar{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:0 8px 25px rgba(30,45,80,.045)}.sidebar h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;margin:2px 8px 10px;color:var(--muted)}.sidebar ol{list-style:none;padding:0;margin:0;counter-reset:item}.sidebar li{margin:2px 0}.sidebar a{display:block;padding:6px 8px;border-radius:8px;color:#44516a;font-size:.86rem;line-height:1.35}.sidebar a:hover{background:var(--soft-blue);text-decoration:none;color:var(--brand)}.content{min-width:0}.section{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 38px;margin-bottom:22px;box-shadow:0 8px 25px rgba(30,45,80,.035)}.section h2{font-size:1.72rem;line-height:1.25;letter-spacing:-.025em;margin:0 0 16px}.section h3{font-size:1.18rem;margin:28px 0 10px;line-height:1.35}.section h4{font-size:1rem;margin:20px 0 7px}.kicker{font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:8px}.lead{font-size:1.08rem;color:#39465e}.muted{color:var(--muted)}p{margin:10px 0 14px}ul,ol{padding-left:1.35rem}li{margin:6px 0}strong{color:#182b52}.grid2,.grid3{display:grid;gap:14px;margin:18px 0}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.mini-card{border:1px solid var(--line);border-radius:14px;padding:17px;background:#fff}.mini-card h3,.mini-card h4{margin:0 0 7px}.mini-card p{font-size:.93rem;margin:0;color:#526078}.mini-card.blue{background:var(--soft-blue);border-color:#dbe5ff}.mini-card.purple{background:var(--soft-purple);border-color:#e5ddff}.mini-card.teal{background:var(--soft-teal);border-color:#cceee7}.mini-card.amber{background:var(--soft-amber);border-color:#f4e1c4}.callout{border-left:4px solid var(--brand);background:var(--soft-blue);padding:15px 18px;border-radius:0 12px 12px 0;margin:18px 0}.callout.tip{border-color:var(--green);background:#eef9f2}.callout.warn{border-color:var(--amber);background:var(--soft-amber)}.callout.correction{border-color:var(--teal);background:var(--soft-teal)}.callout p:last-child{margin-bottom:0}.equation{background:#f7f8fc;border:1px solid #e3e8f2;border-radius:12px;padding:17px 20px;margin:15px 0;text-align:center;font:600 1.12rem/1.65 "Cambria Math",Cambria,Georgia,serif;overflow-x:auto;color:#1b2d55}.equation small{display:block;font:normal .78rem/1.5 Inter,system-ui,sans-serif;color:var(--muted);margin-top:6px}.inline-math{font-family:"Cambria Math",Cambria,Georgia,serif;background:#f0f3fa;padding:1px 5px;border-radius:5px;color:#21396e;white-space:nowrap}.diagram{margin:20px 0;padding:14px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fbfcff,#f7f9fd)}.diagram svg{display:block;width:100%;height:auto;max-height:390px}.diagram figcaption{font-size:.83rem;color:var(--muted);margin:8px 7px 0;text-align:center}.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;min-width:580px;font-size:.92rem}th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f3f6fc;color:#304365;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}tr:last-child td{border-bottom:0}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;background:#eef1f7;padding:2px 5px;border-radius:5px;color:#273b68}pre{margin:16px 0 20px;background:var(--mono);color:#e8eefb;border-radius:14px;padding:19px 20px;overflow:auto;line-height:1.6;font-size:.84rem;border:1px solid #26354d;tab-size:4}pre code{background:transparent;color:inherit;padding:0;border-radius:0;font-size:inherit}.code-label{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#65748e;font-size:.77rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 -7px}.pill{display:inline-block;font-size:.72rem;border-radius:999px;padding:3px 8px;background:#edf1fb;color:#3f5590;font-weight:700}.step-list{counter-reset:steps;list-style:none;padding:0}.step-list li{position:relative;padding:0 0 17px 48px;margin:0;min-height:46px}.step-list li:before{counter-increment:steps;content:counter(steps);position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#eaf0ff;color:var(--brand);font-weight:800}.qa{border:1px solid var(--line);border-radius:12px;margin:11px 0;overflow:hidden}.qa summary{cursor:pointer;padding:13px 16px;background:#f8faff;font-weight:700;color:#273c67}.qa .answer{padding:2px 16px 14px}.footer{color:var(--muted);font-size:.86rem;text-align:center;padding:18px}.small{font-size:.86rem}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.tag{font-size:.75rem;border:1px solid var(--line);border-radius:7px;padding:4px 8px;color:#53617a;background:#fff}.toc-note{font-size:.8rem;color:var(--muted);padding:10px 8px 0;border-top:1px solid var(--line);margin-top:10px}.bar{height:9px;background:#e8edf6;border-radius:100px;overflow:hidden;margin:7px 0 10px}.bar span{height:100%;display:block;background:linear-gradient(90deg,#456ad6,#8068e9);border-radius:100px}.math-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.math-grid .equation{margin:6px 0}.checklist{list-style:none;padding:0}.checklist li{padding-left:26px;position:relative}.checklist li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:900}.source-note{font-size:.85rem;color:#5c6880;border-top:1px solid var(--line);padding-top:12px;margin-top:20px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none}.sidebar ol{columns:2}.section{padding:27px 25px}.hero{padding:38px 32px}}
+@media(max-width:620px){.shell{padding:12px 10px 40px}.hero{padding:30px 23px;border-radius:20px}.section{padding:23px 18px;border-radius:16px}.grid2,.grid3,.math-grid{grid-template-columns:1fr}.sidebar ol{columns:1}.section h2{font-size:1.48rem}body{font-size:15px}}
+@media print{body{background:#fff}.shell{max-width:none;padding:0}.hero{box-shadow:none;border-radius:0;print-color-adjust:exact}.layout{display:block}.sidebar{display:none}.section{box-shadow:none;break-inside:avoid;border-radius:0;margin:12px 0;padding:20px}.diagram,pre,.callout{break-inside:avoid}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="hero">
+  <div class="eyebrow">Fine-Tuning Series · Part 2</div>
+  <h1>LoRA &amp; QLoRA: The Mathematics of Parameter-Efficient Fine-Tuning</h1>
+  <p>A practical and mathematical walkthrough of adapting large language models without updating every base-model parameter. Learn why full fine-tuning is expensive, how low-rank matrices reduce trainable parameters, and how 4-bit quantization makes the process more memory-efficient.</p>
+  <div class="chips"><span class="chip">Low-Rank Adaptation</span><span class="chip">Matrix Decomposition</span><span class="chip">Rank Selection</span><span class="chip">4-bit NF4</span><span class="chip">Hugging Face + PEFT</span></div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <h2>On this page</h2>
+  <ol>
+    <li><a href="#roadmap">1. Learning roadmap</a></li>
+    <li><a href="#foundation">2. Base models and fine-tuning</a></li>
+    <li><a href="#full-ft">3. Full fine-tuning challenge</a></li>
+    <li><a href="#peft">4. Parameter-efficient tuning</a></li>
+    <li><a href="#lora">5. What is LoRA?</a></li>
+    <li><a href="#math">6. Low-rank mathematics</a></li>
+    <li><a href="#parameters">7. Parameter-count savings</a></li>
+    <li><a href="#rank">8. Choosing the rank</a></li>
+    <li><a href="#workflow">9. LoRA training workflow</a></li>
+    <li><a href="#qlora">10. What is QLoRA?</a></li>
+    <li><a href="#compare">11. LoRA vs QLoRA</a></li>
+    <li><a href="#code">12. Practical code walkthrough</a></li>
+    <li><a href="#deployment">13. Saving and using adapters</a></li>
+    <li><a href="#limitations">14. Trade-offs and limitations</a></li>
+    <li><a href="#interview">15. Interview questions</a></li>
+    <li><a href="#glossary">16. Glossary</a></li>
+  </ol>
+  <div class="toc-note">The diagrams and code examples are embedded in this file. No external assets are required.</div>
+</aside>
+<main class="content">
+<section class="section" id="roadmap">
+  <div class="kicker">Start here</div>
+  <h2>Learning roadmap</h2>
+  <p class="lead">The central idea is simple: instead of training billions of existing model weights, train a much smaller set of additional parameters that learns the task-specific change.</p>
+  <div class="grid3">
+    <div class="mini-card blue"><h3>LoRA</h3><p>Keep the pretrained model weights fixed and learn a low-rank update using two smaller matrices.</p></div>
+    <div class="mini-card purple"><h3>QLoRA</h3><p>Quantize the frozen base model—commonly to 4-bit—and train LoRA adapters on top.</p></div>
+    <div class="mini-card teal"><h3>Practical outcome</h3><p>Lower trainable-parameter count and reduced memory requirements for adaptation.</p></div>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 245" role="img" aria-label="Learning roadmap from pretrained model to LoRA and QLoRA">
+      <defs><marker id="arrRoad" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7185b8"/></marker></defs>
+      <rect x="25" y="65" width="190" height="110" rx="16" fill="#eaf0ff" stroke="#a9bdf5"/><text x="120" y="105" text-anchor="middle" font-size="17" font-weight="700" fill="#233d7e">Pretrained</text><text x="120" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#233d7e">base model</text><text x="120" y="153" text-anchor="middle" font-size="12" fill="#53658f">W₀ is already learned</text>
+      <path d="M215 120 H310" stroke="#7185b8" stroke-width="3" marker-end="url(#arrRoad)"/>
+      <rect x="320" y="25" width="235" height="88" rx="16" fill="#f1edff" stroke="#c5b7f7"/><text x="437" y="59" text-anchor="middle" font-size="18" font-weight="700" fill="#51409d">LoRA</text><text x="437" y="83" text-anchor="middle" font-size="13" fill="#665a9e">Freeze W₀ · train A and B</text>
+      <rect x="320" y="132" width="235" height="88" rx="16" fill="#eaf8f6" stroke="#a4ded5"/><text x="437" y="166" text-anchor="middle" font-size="18" font-weight="700" fill="#146c69">QLoRA</text><text x="437" y="190" text-anchor="middle" font-size="13" fill="#427e7a">4-bit frozen W₀ · train A and B</text>
+      <path d="M555 69 H655 V120 H690" stroke="#7185b8" stroke-width="3" fill="none" marker-end="url(#arrRoad)"/><path d="M555 176 H655 V120" stroke="#7185b8" stroke-width="3" fill="none"/>
+      <rect x="700" y="65" width="175" height="110" rx="16" fill="#fff5e8" stroke="#efcf9c"/><text x="787" y="105" text-anchor="middle" font-size="17" font-weight="700" fill="#8a4c0b">Adapted</text><text x="787" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#8a4c0b">model</text><text x="787" y="153" text-anchor="middle" font-size="12" fill="#9b6b34">Base + task adapter</text>
+    </svg>
+    <figcaption>Both methods adapt a pretrained model. QLoRA adds low-bit storage for the frozen base weights.</figcaption>
+  </figure>
+  <div class="callout tip"><strong>One-sentence memory aid:</strong> LoRA reduces the number of parameters you train; QLoRA additionally reduces the memory used to store the frozen base model.</div>
+</section>
+
+<section class="section" id="foundation">
+  <div class="kicker">Section 01</div>
+  <h2>Base models and fine-tuning</h2>
+  <p>A <strong>base model</strong> (also called a <strong>pretrained model</strong>) has already learned general patterns from a large pretraining corpus. The corpus may contain text from sources such as books, websites, and other datasets. A language model uses the context it has received to predict the next token.</p>
+  <p>That general capability is useful, but an application often needs behavior specialized for a domain or a task. Fine-tuning continues training from the pretrained weights using a more targeted dataset.</p>
+  <h3>Three levels of adaptation discussed in the lecture</h3>
+  <div class="grid3">
+    <div class="mini-card"><h4>General application adaptation</h4><p>Adapting the base model to a desired assistant or application behavior.</p></div>
+    <div class="mini-card"><h4>Domain-specific fine-tuning</h4><p>Specializing behavior for a domain such as finance, sales, or retail.</p></div>
+    <div class="mini-card"><h4>Task-specific fine-tuning</h4><p>Teaching a narrower task such as document question answering or text-to-SQL.</p></div>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 310" role="img" aria-label="Pretrained model branching to general, domain-specific, and task-specific fine-tuning">
+      <defs><marker id="arrTree" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8292b7"/></marker></defs>
+      <rect x="330" y="18" width="240" height="58" rx="13" fill="#eaf0ff" stroke="#9eb4f2"/><text x="450" y="43" text-anchor="middle" font-size="16" font-weight="700" fill="#263f80">Pretrained base model</text><text x="450" y="62" text-anchor="middle" font-size="12" fill="#55658e">general learned capability</text>
+      <path d="M450 76 V112 H155 V146 M450 112 V146 M450 112 H745 V146" fill="none" stroke="#8292b7" stroke-width="2.5" marker-end="url(#arrTree)"/>
+      <rect x="35" y="153" width="240" height="65" rx="12" fill="#eef8f2" stroke="#aed9bd"/><text x="155" y="180" text-anchor="middle" font-size="15" font-weight="700" fill="#236b42">Application-level</text><text x="155" y="200" text-anchor="middle" font-size="13" fill="#4b765d">assistant behavior</text>
+      <rect x="330" y="153" width="240" height="65" rx="12" fill="#f2efff" stroke="#c7baf5"/><text x="450" y="180" text-anchor="middle" font-size="15" font-weight="700" fill="#57439a">Domain-specific</text><text x="450" y="200" text-anchor="middle" font-size="13" fill="#6d6099">finance · sales · retail</text>
+      <rect x="625" y="153" width="240" height="65" rx="12" fill="#fff5e8" stroke="#efd09f"/><text x="745" y="180" text-anchor="middle" font-size="15" font-weight="700" fill="#8c510f">Task-specific</text><text x="745" y="200" text-anchor="middle" font-size="13" fill="#9a713f">document QA · text-to-SQL</text>
+      <path d="M155 218 V255 M450 218 V255 M745 218 V255" stroke="#aab6cd" stroke-width="2"/><text x="155" y="280" text-anchor="middle" font-size="12" fill="#64748b">Targeted dataset</text><text x="450" y="280" text-anchor="middle" font-size="12" fill="#64748b">Domain examples</text><text x="745" y="280" text-anchor="middle" font-size="12" fill="#64748b">Task examples</text>
+    </svg>
+    <figcaption>These are useful ways to describe the objective of fine-tuning; they are not mutually exclusive training algorithms.</figcaption>
+  </figure>
+  <div class="callout correction"><strong>Terminology clarification:</strong> “Domain-specific” and “task-specific” describe <em>what the adaptation is for</em>. “Full fine-tuning” and “LoRA” describe <em>how the model parameters are updated</em>. A domain-specific task can be trained with either full fine-tuning or LoRA.</div>
+</section>
+
+<section class="section" id="full-ft">
+  <div class="kicker">Section 02</div>
+  <h2>Why full-parameter fine-tuning becomes expensive</h2>
+  <p>In <strong>full-parameter fine-tuning</strong>, the training process updates the pretrained model's weight matrices. If a model has billions of parameters, the optimization process must manage gradients and optimizer state for a very large parameter set, in addition to the model weights and activations.</p>
+  <div class="equation">W<sub>new</sub> = W<sub>old</sub> − η · ∇<sub>W</sub>L</div>
+  <p>Here, <span class="inline-math">L</span> is the training loss, <span class="inline-math">∇<sub>W</sub>L</span> is the gradient with respect to the weights, and <span class="inline-math">η</span> is the learning rate. In full fine-tuning, the trainable set includes the base-model weights.</p>
+  <h3>Where the resource pressure comes from</h3>
+  <div class="grid2">
+    <div class="mini-card blue"><h4>Training memory</h4><p>Model weights, gradients, optimizer states, activations, and temporary workspaces all consume accelerator memory.</p></div>
+    <div class="mini-card amber"><h4>Operational cost</h4><p>Larger GPU memory capacity and compute throughput may be needed, increasing infrastructure cost.</p></div>
+  </div>
+  <p>The lecture uses a very large model (for example, 175 billion parameters) to illustrate why updating every parameter can become impractical for a limited GPU or RAM budget. The exact memory requirement depends on numeric precision, optimizer, batch size, sequence length, architecture, and implementation.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 270" role="img" aria-label="Full fine-tuning updates all model weights while LoRA freezes the base and trains small adapters">
+      <rect x="30" y="24" width="840" height="94" rx="15" fill="#fff2f0" stroke="#efc4bf"/><text x="55" y="52" font-size="16" font-weight="700" fill="#9d3434">Full-parameter fine-tuning</text>
+      <g fill="#f4b4ad" stroke="#d98279"><rect x="55" y="68" width="45" height="30" rx="5"/><rect x="108" y="68" width="45" height="30" rx="5"/><rect x="161" y="68" width="45" height="30" rx="5"/><rect x="214" y="68" width="45" height="30" rx="5"/><rect x="267" y="68" width="45" height="30" rx="5"/><rect x="320" y="68" width="45" height="30" rx="5"/><rect x="373" y="68" width="45" height="30" rx="5"/><rect x="426" y="68" width="45" height="30" rx="5"/><rect x="479" y="68" width="45" height="30" rx="5"/><rect x="532" y="68" width="45" height="30" rx="5"/></g>
+      <text x="618" y="89" font-size="14" fill="#843b36">All base weights are trainable</text>
+      <rect x="30" y="145" width="840" height="101" rx="15" fill="#eff8f4" stroke="#b9dec9"/><text x="55" y="174" font-size="16" font-weight="700" fill="#216b45">LoRA fine-tuning</text>
+      <g fill="#d8dde8" stroke="#aab5c7"><rect x="55" y="190" width="45" height="30" rx="5"/><rect x="108" y="190" width="45" height="30" rx="5"/><rect x="161" y="190" width="45" height="30" rx="5"/><rect x="214" y="190" width="45" height="30" rx="5"/><rect x="267" y="190" width="45" height="30" rx="5"/><rect x="320" y="190" width="45" height="30" rx="5"/><rect x="373" y="190" width="45" height="30" rx="5"/><rect x="426" y="190" width="45" height="30" rx="5"/><rect x="479" y="190" width="45" height="30" rx="5"/><rect x="532" y="190" width="45" height="30" rx="5"/></g>
+      <path d="M55 185 H577" stroke="#8792a6" stroke-width="1.5" stroke-dasharray="5 4"/><text x="612" y="209" font-size="14" fill="#54637b">Frozen base (not updated)</text><rect x="55" y="225" width="22" height="10" rx="3" fill="#8d7ae6"/><text x="87" y="235" font-size="12" fill="#57479a">Small trainable adapter parameters A and B</text>
+    </svg>
+    <figcaption>LoRA changes the optimization target: the pretrained base weights remain frozen and only adapter parameters are trained.</figcaption>
+  </figure>
+</section>
+
+<section class="section" id="peft">
+  <div class="kicker">Section 03</div>
+  <h2>Parameter-efficient fine-tuning (PEFT)</h2>
+  <p><strong>Parameter-efficient fine-tuning</strong> is a family of approaches that adapts a large pretrained model while training only a small fraction of its parameters. LoRA is one prominent approach in this family.</p>
+  <p>The goal is not to rebuild the entire pretrained model from scratch. Instead, preserve the pretrained knowledge and learn a compact task-specific update.</p>
+  <div class="grid2">
+    <div class="mini-card"><h4>Full fine-tuning</h4><p>Update the original model parameter tensors. It offers direct flexibility, but can require substantial memory and compute.</p></div>
+    <div class="mini-card purple"><h4>LoRA / PEFT</h4><p>Freeze the base parameter tensors and optimize a smaller set of adapter parameters.</p></div>
+  </div>
+  <div class="callout tip"><strong>Keep these two questions separate:</strong> (1) Which model behavior should change? (domain or task objective) (2) Which parameters should be trainable? (full model or PEFT adapter)</div>
+</section>
+
+<section class="section" id="lora">
+  <div class="kicker">Section 04</div>
+  <h2>What exactly is LoRA?</h2>
+  <p><strong>LoRA</strong> stands for <strong>Low-Rank Adaptation</strong>. It is a parameter-efficient fine-tuning method in which the original pretrained weights are frozen and a trainable low-rank update is added to selected weight matrices.</p>
+  <p>Suppose a pretrained layer has weight matrix <span class="inline-math">W₀</span>. During full fine-tuning, we would learn an updated matrix directly. With LoRA, we keep <span class="inline-math">W₀</span> fixed and represent the change using two smaller matrices.</p>
+  <div class="equation">W = W₀ + ΔW &nbsp;&nbsp; where &nbsp;&nbsp; ΔW = B A</div>
+  <p>In a commonly used LoRA parameterization, a scaling factor is also applied:</p>
+  <div class="equation">W = W₀ + (α / r) B A</div>
+  <p><strong>W₀</strong> is the frozen pretrained weight matrix. <strong>A</strong> and <strong>B</strong> are trainable low-rank matrices. <strong>r</strong> is the rank, and <strong>α</strong> controls the magnitude of the adapter update. The transcript's simplified equation focuses on <span class="inline-math">W₀ + BA</span>; the scaled version above is the common implementation form.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 330" role="img" aria-label="LoRA layer: input goes through frozen pretrained matrix and trainable low-rank A then B branches, then outputs are added">
+      <defs><marker id="arrLora" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7385ae"/></marker></defs>
+      <text x="45" y="166" font-size="16" font-weight="700" fill="#31415f">Input x</text><path d="M105 160 H165" stroke="#7385ae" stroke-width="2.5" marker-end="url(#arrLora)"/>
+      <rect x="177" y="55" width="205" height="78" rx="13" fill="#eaf0ff" stroke="#a8baf0"/><text x="279" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#274181">Frozen W₀</text><text x="279" y="108" text-anchor="middle" font-size="13" fill="#5b6b92">pretrained weights</text>
+      <rect x="177" y="190" width="205" height="58" rx="12" fill="#f2efff" stroke="#c3b5f0"/><text x="279" y="215" text-anchor="middle" font-size="16" font-weight="700" fill="#59439d">A matrix</text><text x="279" y="235" text-anchor="middle" font-size="12" fill="#75669e">trainable · r × k</text>
+      <path d="M165 160 V94 H177 M165 160 V219 H177" stroke="#7385ae" stroke-width="2.5" fill="none"/>
+      <path d="M382 94 H485 V150 H535" stroke="#7385ae" stroke-width="2.5" fill="none" marker-end="url(#arrLora)"/>
+      <rect x="400" y="190" width="155" height="58" rx="12" fill="#f2efff" stroke="#c3b5f0"/><text x="477" y="215" text-anchor="middle" font-size="16" font-weight="700" fill="#59439d">B matrix</text><text x="477" y="235" text-anchor="middle" font-size="12" fill="#75669e">trainable · d × r</text>
+      <path d="M382 219 H400 M555 219 H590 V160 H615" stroke="#7385ae" stroke-width="2.5" fill="none" marker-end="url(#arrLora)"/>
+      <circle cx="643" cy="160" r="25" fill="#fff5e8" stroke="#e9c58d" stroke-width="2"/><text x="643" y="168" text-anchor="middle" font-size="25" font-weight="700" fill="#8c510f">+</text>
+      <path d="M560 94 H643 V135" stroke="#7385ae" stroke-width="2.5" fill="none"/>
+      <path d="M668 160 H730" stroke="#7385ae" stroke-width="2.5" marker-end="url(#arrLora)"/><rect x="742" y="124" width="125" height="72" rx="13" fill="#eaf8f3" stroke="#abdac6"/><text x="804" y="153" text-anchor="middle" font-size="16" font-weight="700" fill="#206b48">Output</text><text x="804" y="176" text-anchor="middle" font-size="13" fill="#54816b">W₀x + BAx</text>
+      <text x="280" y="30" text-anchor="middle" font-size="12" fill="#5c6a82">Original path</text><text x="385" y="285" text-anchor="middle" font-size="12" fill="#6b5b9f">Low-rank adapter path</text><text x="450" y="313" text-anchor="middle" font-size="12" fill="#7b879b">Only A and B receive gradients; W₀ stays frozen.</text>
+    </svg>
+    <figcaption>The original linear transformation and the learned low-rank update contribute to the same output.</figcaption>
+  </figure>
+  <h3>What “low rank” means intuitively</h3>
+  <p>A matrix's rank describes the number of linearly independent directions represented by its rows or columns. A low-rank matrix can be expressed as the product of two narrower matrices. Instead of learning every entry in a large update matrix independently, LoRA constrains the update to a lower-dimensional structure.</p>
+  <div class="callout warn"><strong>Important:</strong> LoRA does not mean the original model matrix is replaced by two tiny matrices. The original matrix <span class="inline-math">W₀</span> remains in the model. The two smaller matrices represent the <em>trainable update</em> added to it.</div>
+</section>
+
+<section class="section" id="math">
+  <div class="kicker">Section 05</div>
+  <h2>The low-rank matrix mathematics</h2>
+  <h3>Worked example: a 3 × 3 update</h3>
+  <p>Assume a layer's weight update is represented by a 3 × 3 matrix. A direct update contains nine scalar values.</p>
+  <div class="equation">ΔW ∈ ℝ<sup>3×3</sup></div>
+  <p>For rank <span class="inline-math">r = 1</span>, LoRA can represent the update as:</p>
+  <div class="math-grid">
+    <div class="equation">B ∈ ℝ<sup>3×1</sup><small>3 trainable values</small></div>
+    <div class="equation">A ∈ ℝ<sup>1×3</sup><small>3 trainable values</small></div>
+  </div>
+  <div class="equation">B A = (3 × 1)(1 × 3) = 3 × 3<small>Six scalar parameters generate a 3 × 3 update matrix.</small></div>
+  <p>For example, let:</p>
+  <div class="equation">B = [ 1 &nbsp; 2 &nbsp; 3 ]<sup>T</sup>, &nbsp;&nbsp; A = [ 4 &nbsp; 5 &nbsp; 6 ]</div>
+  <div class="equation">BA = <br>[ 4 &nbsp; 5 &nbsp; 6 ]<br>[ 8 &nbsp; 10 &nbsp; 12 ]<br>[ 12 &nbsp; 15 &nbsp; 18 ]</div>
+  <p>The product has nine entries, but it was generated from only six trainable scalar values. This is the core compression idea behind the LoRA update.</p>
+  <div class="callout correction"><strong>Mathematical nuance:</strong> six values do not encode an arbitrary 3 × 3 matrix. A rank-1 product is constrained: every row and column is linearly dependent in the resulting matrix. LoRA trades unrestricted updates for a lower-dimensional update space. Larger ranks provide more expressive update capacity.</div>
+  <h3>What changes when rank increases?</h3>
+  <p>For a general update matrix of shape <span class="inline-math">d × k</span>, choose a rank <span class="inline-math">r</span> and use:</p>
+  <div class="equation">B ∈ ℝ<sup>d×r</sup>, &nbsp; A ∈ ℝ<sup>r×k</sup>, &nbsp; BA ∈ ℝ<sup>d×k</sup></div>
+  <p>As <span class="inline-math">r</span> increases, the update can represent a richer set of changes. But the number of trainable adapter parameters increases too.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 245" role="img" aria-label="Rank one, rank two, and higher rank increase the adapter's representational capacity and parameter count">
+      <g transform="translate(38,26)"><rect width="238" height="180" rx="15" fill="#f2efff" stroke="#c8baf6"/><text x="119" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#58449c">Rank 1</text><g fill="#a998e9"><rect x="58" y="53" width="32" height="32" rx="4"/><rect x="98" y="53" width="32" height="32" rx="4"/><rect x="138" y="53" width="32" height="32" rx="4"/></g><text x="119" y="117" text-anchor="middle" font-size="14" fill="#564b80">Smallest adapter</text><text x="119" y="142" text-anchor="middle" font-size="12" fill="#716796">Fewer degrees of freedom</text></g>
+      <g transform="translate(331,26)"><rect width="238" height="180" rx="15" fill="#eef3ff" stroke="#b9c9f2"/><text x="119" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#3655a2">Rank 2</text><g fill="#7893df"><rect x="58" y="53" width="32" height="32" rx="4"/><rect x="98" y="53" width="32" height="32" rx="4"/><rect x="138" y="53" width="32" height="32" rx="4"/><rect x="58" y="91" width="32" height="32" rx="4"/><rect x="98" y="91" width="32" height="32" rx="4"/><rect x="138" y="91" width="32" height="32" rx="4"/></g><text x="119" y="151" text-anchor="middle" font-size="12" fill="#52648f">More update capacity</text></g>
+      <g transform="translate(624,26)"><rect width="238" height="180" rx="15" fill="#eaf8f5" stroke="#b3e0d7"/><text x="119" y="30" text-anchor="middle" font-size="16" font-weight="700" fill="#216f68">Higher rank</text><g fill="#58b6a4"><rect x="48" y="53" width="28" height="28" rx="4"/><rect x="82" y="53" width="28" height="28" rx="4"/><rect x="116" y="53" width="28" height="28" rx="4"/><rect x="150" y="53" width="28" height="28" rx="4"/><rect x="48" y="87" width="28" height="28" rx="4"/><rect x="82" y="87" width="28" height="28" rx="4"/><rect x="116" y="87" width="28" height="28" rx="4"/><rect x="150" y="87" width="28" height="28" rx="4"/><rect x="48" y="121" width="28" height="28" rx="4"/><rect x="82" y="121" width="28" height="28" rx="4"/><rect x="116" y="121" width="28" height="28" rx="4"/><rect x="150" y="121" width="28" height="28" rx="4"/></g><text x="119" y="167" text-anchor="middle" font-size="11" fill="#4e817a">More trainable values</text></g>
+    </svg>
+    <figcaption>Conceptual illustration only: increasing rank increases the capacity of the low-rank update.</figcaption>
+  </figure>
+</section>
+
+<section class="section" id="parameters">
+  <div class="kicker">Section 06</div>
+  <h2>How many trainable parameters does LoRA save?</h2>
+  <p>For a conventional dense matrix of shape <span class="inline-math">d × k</span>, full fine-tuning has <span class="inline-math">d · k</span> trainable entries for that matrix. LoRA's two matrices contain:</p>
+  <div class="equation">N<sub>LoRA</sub> = d r + r k = r(d + k)</div>
+  <div class="equation">N<sub>full</sub> = d k</div>
+  <p>When <span class="inline-math">r</span> is much smaller than both dimensions, <span class="inline-math">r(d+k)</span> can be much smaller than <span class="inline-math">dk</span>.</p>
+  <h3>Numerical example: 4096 × 4096 matrix, rank 8</h3>
+  <div class="grid2">
+    <div class="mini-card amber"><h4>Full update</h4><div class="equation">4096 × 4096 = 16,777,216</div><p>About 16.78 million trainable values for this one matrix.</p></div>
+    <div class="mini-card teal"><h4>LoRA update</h4><div class="equation">8 × (4096 + 4096) = 65,536</div><p>65,536 trainable values across A and B.</p></div>
+  </div>
+  <div class="callout tip"><strong>Result for this one matrix:</strong> LoRA trains about 0.39% as many parameters as a full update, or roughly 256 times fewer. This is an illustrative layer-level calculation, not a universal whole-model percentage.</div>
+  <h3>Why the whole-model total depends on configuration</h3>
+  <p>In a Transformer, LoRA can be attached to selected projection matrices, such as query, key, value, and output projections. The total adapter size depends on:</p>
+  <ul>
+    <li>How many layers receive adapters.</li>
+    <li>Which modules are targeted (for example, Q/V only versus Q/K/V/O).</li>
+    <li>The dimensions of those modules.</li>
+    <li>The rank selected for each adapter.</li>
+  </ul>
+  <p>The lecture compares small adapter parameter counts against a very large full-model parameter count. Those counts are illustrative and configuration-specific; do not treat one reported percentage as a fixed property of LoRA.</p>
+</section>
+
+<section class="section" id="rank">
+  <div class="kicker">Section 07</div>
+  <h2>Choosing the LoRA rank (r)</h2>
+  <p>The rank is a key hyperparameter. It determines the intermediate dimension of the adapter matrices and therefore affects both parameter count and adaptation capacity.</p>
+  <div class="table-wrap"><table><thead><tr><th>Rank choice</th><th>Parameter cost</th><th>Potential behavior</th><th>When to consider it</th></tr></thead><tbody>
+    <tr><td><strong>Low rank</strong> (e.g. 1–4)</td><td>Lower</td><td>More constrained update; less trainable capacity</td><td>Start with a small adapter when the task is relatively narrow or resources are tight.</td></tr>
+    <tr><td><strong>Moderate rank</strong> (e.g. 8–16)</td><td>Moderate</td><td>More capacity while remaining parameter-efficient</td><td>A practical starting range to experiment with; the lecture highlights rank 8 as a common example.</td></tr>
+    <tr><td><strong>Higher rank</strong> (e.g. 32–64+)</td><td>Higher</td><td>Can represent more complex updates, but costs more memory and compute</td><td>Consider when validation results indicate that a smaller adapter is underfitting.</td></tr>
+  </tbody></table></div>
+  <div class="callout warn"><strong>Do not choose rank by intuition alone.</strong> Compare candidate ranks on a held-out validation set while keeping the data, training budget, and evaluation method controlled.</div>
+  <h3>Other important LoRA configuration fields</h3>
+  <ul>
+    <li><code>r</code>: adapter rank.</li>
+    <li><code>lora_alpha</code>: scaling hyperparameter for the LoRA update.</li>
+    <li><code>lora_dropout</code>: dropout applied on the adapter path during training.</li>
+    <li><code>target_modules</code>: names of the model layers to which adapters are attached.</li>
+    <li><code>task_type</code>: task family, such as causal language modeling.</li>
+  </ul>
+  <p>The transcript points to Q/K/V projections in Transformer attention. In actual code, module names are architecture-dependent. Some models use names such as <code>q_proj</code>, <code>k_proj</code>, <code>v_proj</code>, and <code>o_proj</code>; others use different naming conventions.</p>
+</section>
+
+<section class="section" id="workflow">
+  <div class="kicker">Section 08</div>
+  <h2>LoRA fine-tuning workflow</h2>
+  <ol class="step-list">
+    <li><strong>Load a pretrained model.</strong> The base model already contains general language capabilities.</li>
+    <li><strong>Freeze the base weights.</strong> Prevent gradient updates to the original pretrained parameter tensors.</li>
+    <li><strong>Select target modules and rank.</strong> Decide which projection layers receive low-rank adapters and choose an initial rank.</li>
+    <li><strong>Initialize A and B.</strong> Add the trainable adapter matrices to the selected modules.</li>
+    <li><strong>Train on task-specific examples.</strong> Backpropagation updates the adapter parameters, not the frozen base weights.</li>
+    <li><strong>Evaluate and save.</strong> Measure task performance and save the adapter configuration and weights.</li>
+  </ol>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 200" role="img" aria-label="LoRA workflow from model loading through freezing, attaching adapters, training, evaluating and saving">
+      <defs><marker id="arrFlow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#8998b7"/></marker></defs>
+      <g font-family="Inter, sans-serif" font-size="13" text-anchor="middle" font-weight="700"><rect x="12" y="55" width="128" height="82" rx="12" fill="#eaf0ff" stroke="#adc0f3"/><text x="76" y="88" fill="#2a4384">Load base</text><text x="76" y="108" fill="#2a4384">model</text>
+      <rect x="164" y="55" width="128" height="82" rx="12" fill="#eff2f7" stroke="#cbd2df"/><text x="228" y="88" fill="#45546d">Freeze</text><text x="228" y="108" fill="#45546d">W₀</text>
+      <rect x="316" y="55" width="128" height="82" rx="12" fill="#f2efff" stroke="#c9baf5"/><text x="380" y="88" fill="#5b469c">Attach A/B</text><text x="380" y="108" fill="#5b469c">adapters</text>
+      <rect x="468" y="55" width="128" height="82" rx="12" fill="#eaf8f5" stroke="#b2e0d6"/><text x="532" y="88" fill="#216e67">Train on</text><text x="532" y="108" fill="#216e67">task data</text>
+      <rect x="620" y="55" width="128" height="82" rx="12" fill="#fff5e8" stroke="#efd09f"/><text x="684" y="88" fill="#87500e">Evaluate</text><text x="684" y="108" fill="#87500e">quality</text>
+      <rect x="772" y="55" width="116" height="82" rx="12" fill="#edf7ef" stroke="#b8d9bd"/><text x="830" y="88" fill="#28623b">Save</text><text x="830" y="108" fill="#28623b">adapter</text></g>
+      <g stroke="#8998b7" stroke-width="2.2" marker-end="url(#arrFlow)"><path d="M140 96 H160"/><path d="M292 96 H312"/><path d="M444 96 H464"/><path d="M596 96 H616"/><path d="M748 96 H768"/></g>
+      <text x="450" y="175" text-anchor="middle" font-size="12" fill="#66748c">Only the adapter parameter set is optimized during LoRA training.</text>
+    </svg>
+    <figcaption>A typical adapter fine-tuning pipeline. Validation results should guide rank and target-module choices.</figcaption>
+  </figure>
+</section>
+
+<section class="section" id="qlora">
+  <div class="kicker">Section 09</div>
+  <h2>What is QLoRA?</h2>
+  <p><strong>QLoRA</strong> combines low-rank adaptation with quantization. The pretrained base model is stored in a low-bit representation—commonly 4-bit—while LoRA adapters are trained on top of that frozen base.</p>
+  <p>The transcript describes a common configuration: load the base model in 4-bit using the <code>bitsandbytes</code> integration, use NF4 quantization, and perform computation/training with a higher-precision compute type such as FP16 or BF16.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 320" role="img" aria-label="QLoRA architecture: 4-bit quantized frozen base weights and trainable higher-precision LoRA adapters">
+      <defs><marker id="arrQ" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7c8cab"/></marker></defs>
+      <rect x="35" y="35" width="340" height="110" rx="16" fill="#eaf0ff" stroke="#b3c4f4"/><text x="205" y="68" text-anchor="middle" font-size="17" font-weight="700" fill="#284484">Frozen base model</text><text x="205" y="96" text-anchor="middle" font-size="15" fill="#435b91">4-bit quantized weights</text><text x="205" y="120" text-anchor="middle" font-size="12" fill="#65769b">NF4 representation in the example</text>
+      <rect x="35" y="178" width="340" height="105" rx="16" fill="#f2efff" stroke="#cabdf3"/><text x="205" y="211" text-anchor="middle" font-size="17" font-weight="700" fill="#58449a">Trainable LoRA adapters</text><text x="205" y="239" text-anchor="middle" font-size="15" fill="#6a5a9f">A and B matrices</text><text x="205" y="261" text-anchor="middle" font-size="12" fill="#7a6ca4">higher-precision compute path</text>
+      <path d="M375 90 H465 V152 H520 M375 230 H465 V168 H520" fill="none" stroke="#7c8cab" stroke-width="2.5" marker-end="url(#arrQ)"/>
+      <circle cx="546" cy="160" r="25" fill="#fff5e8" stroke="#e9c58d" stroke-width="2"/><text x="546" y="168" text-anchor="middle" font-size="25" font-weight="700" fill="#8c510f">+</text>
+      <path d="M571 160 H650" stroke="#7c8cab" stroke-width="2.5" marker-end="url(#arrQ)"/><rect x="662" y="110" width="200" height="100" rx="15" fill="#eaf8f3" stroke="#afdccc"/><text x="762" y="145" text-anchor="middle" font-size="17" font-weight="700" fill="#216c49">Adapted</text><text x="762" y="170" text-anchor="middle" font-size="17" font-weight="700" fill="#216c49">model output</text><text x="762" y="191" text-anchor="middle" font-size="12" fill="#58816e">base path + adapter path</text>
+      <text x="450" y="307" text-anchor="middle" font-size="12" fill="#66748c">Low-bit storage reduces base-weight memory; adapters remain trainable.</text>
+    </svg>
+    <figcaption>Conceptual QLoRA data path. The base is quantized and frozen; the adapter parameters are optimized.</figcaption>
+  </figure>
+  <h3>NF4 and compute precision</h3>
+  <ul>
+    <li><strong>4-bit loading:</strong> stores the base-model weights using a 4-bit quantized representation.</li>
+    <li><strong>NF4:</strong> a 4-bit quantization data type commonly used in QLoRA configurations.</li>
+    <li><strong>Compute dtype:</strong> controls the precision used for computation. The transcript gives FP16 as an example; BF16 may also be available depending on hardware and model support.</li>
+    <li><strong>Adapter parameters:</strong> remain trainable while the quantized base weights are kept frozen.</li>
+  </ul>
+  <div class="callout correction"><strong>Precision clarification:</strong> A quantized model is not simply converted back into a permanently stored full FP16 model for every operation. Quantized weights are used by quantization-aware kernels, with values handled in the compute dtype as needed. The base remains represented in low-bit form in memory.</div>
+  <h3>Why QLoRA helps</h3>
+  <p>LoRA reduces the number of trainable parameters, but a large base model can still take substantial memory to load. QLoRA addresses that additional bottleneck by reducing the storage precision of the frozen base weights.</p>
+  <div class="callout tip"><strong>Simple memory estimate:</strong> 7 billion raw parameters at 4 bits each require approximately 3.5 GB for the packed weight values alone (7B × 4 ÷ 8). This excludes quantization metadata, non-quantized modules, activations, adapter weights, optimizer state, and runtime overhead, so actual GPU memory usage is higher.</div>
+</section>
+
+<section class="section" id="compare">
+  <div class="kicker">Section 10</div>
+  <h2>LoRA vs. QLoRA</h2>
+  <div class="table-wrap"><table><thead><tr><th>Dimension</th><th>LoRA</th><th>QLoRA</th></tr></thead><tbody>
+    <tr><td>Base-model weights</td><td>Frozen; typically loaded in a supported floating-point precision</td><td>Frozen; stored in a quantized low-bit representation, commonly 4-bit</td></tr>
+    <tr><td>Trainable parameters</td><td>LoRA adapter matrices</td><td>LoRA adapter matrices</td></tr>
+    <tr><td>Main efficiency benefit</td><td>Fewer trainable parameters</td><td>Fewer trainable parameters plus lower base-weight memory</td></tr>
+    <tr><td>Quantization</td><td>Not required by the method</td><td>Core part of the approach</td></tr>
+    <tr><td>Common use</td><td>Parameter-efficient adaptation when base-model memory is manageable</td><td>Adapter fine-tuning when GPU memory is especially constrained</td></tr>
+  </tbody></table></div>
+  <div class="grid2">
+    <div class="mini-card purple"><h4>Remember LoRA as</h4><p><strong>Frozen base + trainable low-rank update.</strong></p></div>
+    <div class="mini-card teal"><h4>Remember QLoRA as</h4><p><strong>Quantized frozen base + trainable low-rank update.</strong></p></div>
+  </div>
+</section>
+
+<section class="section" id="code">
+  <div class="kicker">Section 11</div>
+  <h2>Practical code walkthrough: QLoRA with Hugging Face</h2>
+  <p>The transcript demonstrates the core configuration ideas: <code>load_in_4bit=True</code>, NF4 quantization, a compute dtype, and a LoRA configuration with a chosen rank and target modules. The following example turns those ideas into a practical training scaffold.</p>
+  <div class="callout warn"><strong>Before running:</strong> install compatible versions of <code>torch</code>, <code>transformers</code>, <code>peft</code>, <code>accelerate</code>, <code>bitsandbytes</code>, and <code>datasets</code>. Choose a model you have permission to access. The target-module names below are common for LLaMA-like architectures; inspect your model and change them when necessary.</div>
+  <div class="code-label"><span>1 · Install the required packages</span><span class="pill">Terminal</span></div>
+  <pre><code>pip install -U torch transformers peft accelerate bitsandbytes datasets</code></pre>
+  <div class="code-label"><span>2 · Load a 4-bit base model</span><span class="pill">Python</span></div>
+  <pre><code>import torch
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
+
+MODEL_ID = "your-authorized-causal-lm-model"
+
+if not torch.cuda.is_available():
+    raise RuntimeError("This 4-bit bitsandbytes QLoRA example expects a supported CUDA GPU.")
+
+# Prefer BF16 when the installed GPU supports it; otherwise use FP16.
+compute_dtype = (
+    torch.bfloat16
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    else torch.float16
+)
+
+quant_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=compute_dtype,
+    bnb_4bit_use_double_quant=True,
+)
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=quant_config,
+    device_map="auto",
+)
+
+model.config.use_cache = False</code></pre>
+  <p class="small muted">The NF4 and 4-bit settings reflect the QLoRA configuration discussed in the lecture. Double quantization is included as an optional memory optimization in common QLoRA setups; it is an implementation detail beyond the transcript's main explanation.</p>
+  <div class="code-label"><span>3 · Prepare the quantized model and attach LoRA adapters</span><span class="pill">Python</span></div>
+  <pre><code>from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_kbit_training,
+)
+
+# Prepare the quantized model for adapter training.
+model = prepare_model_for_kbit_training(model)
+
+lora_config = LoraConfig(
+    r=8,                         # rank
+    lora_alpha=16,               # update scaling hyperparameter
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+    target_modules=[
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+    ],
+)
+
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()</code></pre>
+  <p>Interpretation of the important fields:</p>
+  <ul>
+    <li><code>r=8</code> chooses the low-rank dimension highlighted in the lecture.</li>
+    <li><code>lora_alpha=16</code> sets the adapter scaling hyperparameter.</li>
+    <li><code>target_modules</code> chooses which Transformer projections receive adapters.</li>
+    <li><code>task_type="CAUSAL_LM"</code> declares the causal language-modeling task.</li>
+  </ul>
+  <div class="code-label"><span>4 · Prepare a tiny illustrative text dataset</span><span class="pill">Python</span></div>
+  <pre><code>from datasets import Dataset
+
+# Replace these examples with your own domain/task training data.
+train_texts = [
+    "Question: What is LoRA?\nAnswer: LoRA adapts a model using low-rank trainable updates.",
+    "Question: What is QLoRA?\nAnswer: QLoRA combines a quantized frozen base with LoRA adapters.",
+    "Question: What does rank control?\nAnswer: Rank controls the size and capacity of the low-rank update.",
+]
+
+raw_dataset = Dataset.from_dict({"text": train_texts})
+
+def tokenize_batch(batch):
+    return tokenizer(
+        batch["text"],
+        truncation=True,
+        max_length=512,
+    )
+
+tokenized_dataset = raw_dataset.map(
+    tokenize_batch,
+    batched=True,
+    remove_columns=["text"],
+)</code></pre>
+  <div class="code-label"><span>5 · Train the adapter</span><span class="pill">Python</span></div>
+  <pre><code>from transformers import Trainer, TrainingArguments
+
+training_args = TrainingArguments(
+    output_dir="./qlora-output",
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=8,
+    learning_rate=2e-4,
+    num_train_epochs=1,
+    logging_steps=1,
+    save_strategy="epoch",
+    optim="adamw_torch",
+    fp16=(compute_dtype == torch.float16),
+    bf16=(compute_dtype == torch.bfloat16),
+    report_to="none",
+)
+
+class CausalLMCollator:
+    """Pad a batch and mask only padding positions in the labels."""
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def __call__(self, features):
+        batch = self.tokenizer.pad(
+            features, padding=True, return_tensors="pt"
+        )
+        labels = batch["input_ids"].clone()
+        labels[batch["attention_mask"] == 0] = -100
+        batch["labels"] = labels
+        return batch
+
+collator = CausalLMCollator(tokenizer)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_dataset,
+    data_collator=collator,
+)
+
+trainer.train()</code></pre>
+  <div class="code-label"><span>6 · Save the adapter</span><span class="pill">Python</span></div>
+  <pre><code>ADAPTER_DIR = "./qlora-output/final-adapter"
+
+model.save_pretrained(ADAPTER_DIR)
+tokenizer.save_pretrained(ADAPTER_DIR)</code></pre>
+  <div class="callout correction"><strong>Code-scope note:</strong> This is a compact end-to-end scaffold, not a production training recipe. The sample dataset is only for demonstrating the mechanics. Real fine-tuning requires a properly curated dataset, suitable prompt/response formatting, train/validation splits, task-specific evaluation, and hyperparameter tuning. Some model architectures need different target-module names or additional configuration.</div>
+  <h3>Regular LoRA configuration (without 4-bit loading)</h3>
+  <p>For standard LoRA, load the base model in a supported floating-point precision, then attach the same PEFT adapter configuration. You omit the <code>BitsAndBytesConfig</code> and the k-bit preparation step.</p>
+  <pre><code>from transformers import AutoModelForCausalLM
+from peft import LoraConfig, get_peft_model
+import torch
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    torch_dtype=torch.bfloat16,
+    device_map="auto",
+)
+
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()</code></pre>
+</section>
+
+<section class="section" id="deployment">
+  <div class="kicker">Section 12</div>
+  <h2>Saving and using the trained adapter</h2>
+  <p>One practical advantage of adapter-based tuning is that the adapter checkpoint is much smaller than a complete copy of the base model. To use it later, load the same base model and attach the saved adapter.</p>
+  <pre><code>from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+import torch
+
+BASE_MODEL_ID = "your-authorized-base-model"
+ADAPTER_DIR = "./qlora-output/final-adapter"
+
+base_model = AutoModelForCausalLM.from_pretrained(
+    BASE_MODEL_ID,
+    torch_dtype=torch.bfloat16,
+    device_map="auto",
+)
+
+model = PeftModel.from_pretrained(base_model, ADAPTER_DIR)
+tokenizer = AutoTokenizer.from_pretrained(ADAPTER_DIR)
+
+prompt = "Explain low-rank adaptation in one paragraph."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+with torch.no_grad():
+    output_ids = model.generate(
+        **inputs,
+        max_new_tokens=120,
+        do_sample=False,
+    )
+
+print(tokenizer.decode(output_ids[0], skip_special_tokens=True))</code></pre>
+  <p class="small muted">For a quantized deployment, load the base model with a compatible quantization configuration before attaching the adapter. Keep the base model identifier and adapter configuration together so the correct base checkpoint is used.</p>
+</section>
+
+<section class="section" id="limitations">
+  <div class="kicker">Section 13</div>
+  <h2>Trade-offs and limitations</h2>
+  <div class="table-wrap"><table><thead><tr><th>Benefit</th><th>Trade-off / consideration</th></tr></thead><tbody>
+    <tr><td>Far fewer trainable parameters than full fine-tuning</td><td>Adapter capacity is constrained by the selected rank and target modules.</td></tr>
+    <tr><td>Smaller adapter checkpoints</td><td>The base model is still required for inference unless a deployment workflow merges or otherwise packages the adapter with it.</td></tr>
+    <tr><td>QLoRA lowers base-weight storage memory</td><td>Quantization may introduce numerical differences; evaluate task quality after fine-tuning.</td></tr>
+    <tr><td>Can make fine-tuning feasible on more modest hardware</td><td>Memory is not zero: activations, context length, batch size, optimizer state, and implementation overhead still matter.</td></tr>
+    <tr><td>Multiple adapters can represent different tasks</td><td>Adapter selection, versioning, and base-model compatibility must be managed carefully.</td></tr>
+  </tbody></table></div>
+  <div class="callout tip"><strong>Practical decision rule:</strong> Start with LoRA if the base model fits comfortably in memory. Consider QLoRA when loading the base model is the dominant memory constraint. Increase rank or broaden target modules only when evaluation suggests the adapter lacks enough capacity.</div>
+</section>
+
+<section class="section" id="interview">
+  <div class="kicker">Section 14</div>
+  <h2>Interview questions and answers</h2>
+  <details class="qa"><summary>1. What is LoRA?</summary><div class="answer"><p>LoRA (Low-Rank Adaptation) is a parameter-efficient fine-tuning method. It freezes the pretrained model weights and learns a low-rank update represented by two smaller matrices, typically written as <span class="inline-math">ΔW = BA</span>.</p></div></details>
+  <details class="qa"><summary>2. Why is LoRA more parameter-efficient than full fine-tuning?</summary><div class="answer"><p>For a dense <span class="inline-math">d × k</span> matrix, a full update trains <span class="inline-math">dk</span> values. A rank-r LoRA update trains <span class="inline-math">r(d+k)</span> values. When r is small relative to d and k, this is much smaller.</p></div></details>
+  <details class="qa"><summary>3. What does the rank r control?</summary><div class="answer"><p>It controls the intermediate dimension of the low-rank factors and therefore the adapter's parameter count and representational capacity. Higher rank costs more but can represent richer updates.</p></div></details>
+  <details class="qa"><summary>4. What is the difference between LoRA and QLoRA?</summary><div class="answer"><p>LoRA freezes the base and trains low-rank adapters. QLoRA does the same while storing the frozen base in a quantized low-bit format, commonly 4-bit, to reduce memory use.</p></div></details>
+  <details class="qa"><summary>5. What is NF4?</summary><div class="answer"><p>NF4 is a 4-bit quantization data type used in common QLoRA configurations to represent the frozen base-model weights.</p></div></details>
+  <details class="qa"><summary>6. Why do we use a higher-precision compute dtype with 4-bit weights?</summary><div class="answer"><p>Low-bit quantization reduces storage, while computation may use a supported higher-precision type such as FP16 or BF16 for numerical operations. Storage precision and compute precision are separate configuration choices.</p></div></details>
+  <details class="qa"><summary>7. When would you increase the LoRA rank?</summary><div class="answer"><p>When validation suggests the current adapter is underfitting or the task requires a more expressive adaptation. Increasing rank should be tested against its added memory and compute cost.</p></div></details>
+  <details class="qa"><summary>8. What are target modules?</summary><div class="answer"><p>They are the specific model layers where LoRA adapters are inserted, commonly Transformer attention projections such as query, key, value, and output projections. Names vary by architecture.</p></div></details>
+  <details class="qa"><summary>9. Does LoRA reduce the base model's parameter count?</summary><div class="answer"><p>No. The pretrained base model remains intact and frozen. LoRA reduces the number of additional trainable parameters. QLoRA reduces the memory representation of the frozen base by quantizing it.</p></div></details>
+  <details class="qa"><summary>10. Does a rank-1 factorization reproduce every possible 3 × 3 update matrix?</summary><div class="answer"><p>No. A rank-1 product has a constrained structure. It can be generated from six values in the 3 × 1 and 1 × 3 factors, but it cannot represent an arbitrary 3 × 3 matrix. Higher rank provides more expressive capacity.</p></div></details>
+  <h3>Concise interview summary</h3>
+  <blockquote>“LoRA freezes the pretrained model and learns a low-rank update using two smaller matrices, reducing the number of trainable parameters from roughly dk to r(d+k) for a targeted weight matrix. QLoRA combines this with low-bit quantization of the frozen base model—commonly 4-bit NF4—so fine-tuning requires less GPU memory.”</blockquote>
+</section>
+
+<section class="section" id="glossary">
+  <div class="kicker">Section 15</div>
+  <h2>Glossary and revision checklist</h2>
+  <div class="table-wrap"><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>
+    <tr><td><strong>Base model</strong></td><td>Pretrained model used as the starting point for adaptation.</td></tr>
+    <tr><td><strong>Full fine-tuning</strong></td><td>Training that updates the pretrained model's parameters.</td></tr>
+    <tr><td><strong>PEFT</strong></td><td>Parameter-Efficient Fine-Tuning; methods that adapt a model by training a smaller parameter set.</td></tr>
+    <tr><td><strong>LoRA</strong></td><td>Low-Rank Adaptation; learns a low-rank update while freezing the base weights.</td></tr>
+    <tr><td><strong>QLoRA</strong></td><td>Quantized LoRA; uses a quantized frozen base model with trainable LoRA adapters.</td></tr>
+    <tr><td><strong>Rank (r)</strong></td><td>Intermediate dimension used in the factorized update matrices.</td></tr>
+    <tr><td><strong>Target modules</strong></td><td>Model layers selected to receive LoRA adapters.</td></tr>
+    <tr><td><strong>NF4</strong></td><td>A 4-bit quantization data type commonly used in QLoRA.</td></tr>
+    <tr><td><strong>Compute dtype</strong></td><td>Numeric precision used for computations, such as FP16 or BF16.</td></tr>
+    <tr><td><strong>Adapter</strong></td><td>The small set of learned parameters added to a pretrained model.</td></tr>
+  </tbody></table></div>
+  <h3>Revision checklist</h3>
+  <ul class="checklist">
+    <li>I can explain why full fine-tuning is expensive.</li>
+    <li>I can distinguish the fine-tuning objective (domain/task) from the update method (full/LoRA).</li>
+    <li>I can explain <span class="inline-math">W = W₀ + (α/r)BA</span>.</li>
+    <li>I can derive the LoRA parameter count <span class="inline-math">r(d+k)</span>.</li>
+    <li>I understand how rank changes adapter size and capacity.</li>
+    <li>I can explain why QLoRA stores frozen base weights in 4-bit form.</li>
+    <li>I know what NF4, compute dtype, and target modules mean.</li>
+    <li>I can configure a PEFT adapter and evaluate the result on held-out data.</li>
+  </ul>
+  <div class="source-note"><strong>Source alignment:</strong> These notes are based on the supplied Part 2 transcript about LoRA and QLoRA. The core sequence—base model, full fine-tuning challenge, low-rank decomposition, rank selection, 4-bit quantized base, NF4, and PEFT configuration—follows the lesson. Clearly marked clarification boxes add mathematical precision or practical implementation context where the spoken explanation was simplified.</div>
+</section>
+<div class="footer">End of lesson · LoRA &amp; QLoRA · Fine-Tuning Series</div>
+</main>
+</div>
+</div>
+</body>
+</html>

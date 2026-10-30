@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A detailed, practical guide to LLM model quantization: FP32, FP16, INT8, scale, zero-point, calibration, PTQ, QAT, and QLoRA." />
+  <title>LLM Model Quantization — From FP32 to Low-Bit Models</title>
+  <style>
+    :root {
+      --ink: #172338;
+      --muted: #5d6b80;
+      --paper: #f5f7fb;
+      --surface: #ffffff;
+      --line: #dce3ee;
+      --navy: #102542;
+      --blue: #2563eb;
+      --blue-soft: #eaf2ff;
+      --teal: #087f8c;
+      --teal-soft: #e8f7f7;
+      --amber: #9a5b00;
+      --amber-soft: #fff5df;
+      --red: #a33a3a;
+      --red-soft: #fff0ef;
+      --green: #14734b;
+      --green-soft: #eaf8f0;
+      --code: #111827;
+      --shadow: 0 12px 35px rgba(23, 35, 56, .07);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 26px; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.72 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .hero {
+      color: #fff;
+      background: linear-gradient(130deg, #102542 0%, #173d68 58%, #146b79 100%);
+      padding: 58px 28px 54px;
+      border-bottom: 5px solid #2ca6a4;
+    }
+    .hero-inner { max-width: 1220px; margin: 0 auto; }
+    .eyebrow {
+      display: inline-block; margin: 0 0 16px; padding: 5px 11px;
+      border: 1px solid rgba(255,255,255,.35); border-radius: 999px;
+      color: #d9f5f3; font-size: .78rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase;
+    }
+    h1 { max-width: 900px; margin: 0; font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.08; letter-spacing: -.045em; }
+    .hero p { max-width: 850px; color: #e2eaf5; font-size: 1.1rem; margin: 22px 0 0; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .hero-meta span { border: 1px solid rgba(255,255,255,.23); background: rgba(255,255,255,.08); padding: 6px 11px; border-radius: 999px; font-size: .84rem; color: #f0f6ff; }
+    .layout { max-width: 1440px; margin: 34px auto; padding: 0 24px; display: grid; grid-template-columns: 258px minmax(0, 1fr); gap: 30px; align-items: start; }
+    .toc {
+      position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow: auto;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 21px 18px; box-shadow: var(--shadow);
+    }
+    .toc h2 { font-size: .86rem; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 12px; color: var(--muted); }
+    .toc ol { padding-left: 20px; margin: 0; }
+    .toc li { padding: 4px 0; color: var(--muted); font-size: .9rem; }
+    .toc a { color: #30435f; }
+    .toc .sub { padding-left: 13px; font-size: .83rem; }
+    main { min-width: 0; }
+    article { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: clamp(22px, 4vw, 48px); box-shadow: var(--shadow); }
+    section { margin: 0 0 54px; }
+    section:last-child { margin-bottom: 0; }
+    h2 { margin: 0 0 18px; font-size: clamp(1.55rem, 3vw, 2.15rem); line-height: 1.2; letter-spacing: -.025em; color: #132d4a; }
+    h3 { margin: 30px 0 10px; font-size: 1.22rem; line-height: 1.35; color: #1b395a; }
+    h4 { margin: 22px 0 8px; font-size: 1.02rem; color: #263f5c; }
+    p { margin: 10px 0 15px; }
+    .lead { color: #40526b; font-size: 1.08rem; }
+    .muted { color: var(--muted); }
+    .small { font-size: .9rem; }
+    .kicker { color: var(--teal); text-transform: uppercase; letter-spacing: .11em; font-size: .76rem; font-weight: 800; margin: 0 0 8px; }
+    .callout { border-radius: 14px; padding: 16px 18px; margin: 20px 0; border: 1px solid; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .info { background: var(--blue-soft); border-color: #c7dafb; }
+    .tip { background: var(--green-soft); border-color: #c8ead7; }
+    .warning { background: var(--amber-soft); border-color: #f2d99e; }
+    .correction { background: var(--red-soft); border-color: #f1c8c4; }
+    .grid-2, .grid-3 { display: grid; gap: 16px; margin: 20px 0; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .mini-card { background: #fbfcfe; border: 1px solid var(--line); border-radius: 15px; padding: 17px; }
+    .mini-card h3, .mini-card h4 { margin-top: 0; }
+    .mini-card p:last-child { margin-bottom: 0; }
+    .tag { display: inline-block; background: #eef2f7; color: #43536a; border-radius: 6px; padding: 2px 7px; font-size: .78rem; font-weight: 700; }
+    .table-wrap { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: .94rem; }
+    th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    th { background: #edf2f8; color: #233c59; font-weight: 750; }
+    tr:last-child td { border-bottom: 0; }
+    td code, p code, li code { background: #eef2f7; color: #20324a; padding: 2px 5px; border-radius: 5px; font-size: .91em; }
+    pre { position: relative; overflow-x: auto; background: var(--code); color: #e5edf7; padding: 20px; border-radius: 14px; margin: 16px 0 22px; font: .88rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 4; }
+    pre code { color: inherit; background: none; padding: 0; }
+    .code-label { display: inline-block; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #4b647f; margin: 3px 0 0; }
+    .equation { overflow-x: auto; padding: 16px 18px; border: 1px solid #d7e1ee; border-radius: 13px; background: #f7faff; color: #173453; margin: 14px 0; font: 1.02rem/1.7 Georgia, "Times New Roman", serif; }
+    .equation.center { text-align: center; font-size: 1.12rem; }
+    .step-list { counter-reset: step; list-style: none; padding: 0; margin: 20px 0; }
+    .step-list li { counter-increment: step; position: relative; padding: 4px 0 18px 54px; min-height: 44px; }
+    .step-list li::before { content: counter(step); position: absolute; left: 0; top: 1px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #1b6680; font-weight: 800; }
+    figure { margin: 24px 0; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #fcfdff; }
+    figure svg { display: block; width: 100%; height: auto; }
+    figcaption { color: var(--muted); font-size: .87rem; margin: 12px 4px 0; }
+    .memory-bars { display: grid; gap: 14px; margin: 22px 0; }
+    .memory-row { display: grid; grid-template-columns: 76px 1fr 120px; gap: 12px; align-items: center; }
+    .memory-row .bar-track { height: 19px; background: #e9eef5; border-radius: 20px; overflow: hidden; }
+    .memory-row .bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #2774bc, #21a0a0); }
+    .memory-row .bar-label { font-size: .91rem; color: #41536b; font-variant-numeric: tabular-nums; }
+    .qa { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 15px 0; }
+    .qa h3 { margin: 0 0 7px; font-size: 1.05rem; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { padding: 6px 0 6px 29px; position: relative; }
+    .checklist li::before { content: "✓"; color: var(--green); font-weight: 900; position: absolute; left: 2px; }
+    .footnote { font-size: .85rem; color: var(--muted); }
+    .source-list li { margin: 9px 0; }
+    footer { max-width: 1440px; margin: 0 auto 38px; padding: 0 24px; color: #68778b; font-size: .85rem; }
+    .footer-inner { border-top: 1px solid var(--line); padding-top: 18px; }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: relative; top: auto; max-height: none; }
+      .toc ol { columns: 2; column-gap: 30px; }
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 42px 20px; }
+      .layout { padding: 0 12px; margin: 18px auto; gap: 16px; }
+      article { padding: 22px 17px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .memory-row { grid-template-columns: 58px 1fr 88px; gap: 8px; }
+      .toc ol { columns: 1; }
+    }
+    @media print {
+      body { background: #fff; }
+      .hero { background: #173d68 !important; print-color-adjust: exact; }
+      .layout { display: block; margin: 0; max-width: none; padding: 0; }
+      .toc { display: none; }
+      article { border: 0; box-shadow: none; padding: 0; }
+      section { break-inside: avoid-page; }
+      pre, figure, .callout { break-inside: avoid; }
+      footer { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Generative AI · Model Optimization</div>
+      <h1>LLM Model Quantization</h1>
+      <p>From FP32 to FP16, INT8 and 4-bit models — understand the memory math, scale and zero-point equations, calibration, PTQ, QAT, and how low-bit quantization is used in practical LLM workflows.</p>
+      <div class="hero-meta">
+        <span>Conceptual foundations</span>
+        <span>Worked calculations</span>
+        <span>Python examples</span>
+        <span>Interview preparation</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#why">Why quantize?</a></li>
+        <li><a href="#formats">Number formats and precision</a></li>
+        <li><a href="#memory">Model memory estimates</a></li>
+        <li><a href="#mechanics">How quantization works</a></li>
+        <li class="sub"><a href="#affine">Scale and zero-point</a></li>
+        <li class="sub"><a href="#worked">Worked examples</a></li>
+        <li><a href="#schemes">Symmetric vs asymmetric</a></li>
+        <li><a href="#calibration">Calibration</a></li>
+        <li><a href="#granularity">Quantization granularity</a></li>
+        <li><a href="#ptq">PTQ</a></li>
+        <li><a href="#qat">QAT</a></li>
+        <li><a href="#llm">Quantization in LLMs</a></li>
+        <li><a href="#code">Python examples</a></li>
+        <li><a href="#tradeoffs">Trade-offs and evaluation</a></li>
+        <li><a href="#plan">Plan of action</a></li>
+        <li><a href="#interview">Interview revision</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+        <li><a href="#references">References</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <article>
+        <section id="overview">
+          <p class="kicker">01 · Overview</p>
+          <h2>What is model quantization?</h2>
+          <p class="lead"><strong>Model quantization</strong> is the process of representing some or all of a neural network's weights and/or activations with fewer bits than the original representation. The purpose is to reduce storage and memory requirements and, when the hardware and kernels support it, improve inference efficiency.</p>
+          <p>For example, a model may originally store its weights as 32-bit floating-point values (<code>FP32</code>). Quantization can represent those values using 16-bit floating point (<code>FP16</code> or <code>BF16</code>), 8-bit integers (<code>INT8</code>), or 4-bit representations. Fewer bits per parameter mean less memory is required to store the model.</p>
+          <div class="callout info">
+            <strong>The central idea</strong>
+            Replace a high-precision representation with a lower-bit representation while keeping the model's predictions sufficiently close to the original model's predictions.
+          </div>
+          <p>Quantization is not exclusive to large language models. It is used in computer vision, speech processing, recommendation systems, NLP models, and edge AI applications. It is especially valuable when a model must run on hardware with limited RAM, VRAM, power, or bandwidth.</p>
+          <div class="grid-3">
+            <div class="mini-card"><h3>Weights</h3><p>Learned parameters such as the values in linear-layer matrices. Weight quantization reduces the memory used by model parameters.</p></div>
+            <div class="mini-card"><h3>Activations</h3><p>Intermediate tensor values produced during the forward pass. Activation quantization can reduce runtime memory and enable integer compute paths.</p></div>
+            <div class="mini-card"><h3>Inference</h3><p>The model's prediction or generation phase. Quantization is often used to fit larger models on smaller devices and reduce memory traffic.</p></div>
+          </div>
+        </section>
+
+        <section id="why">
+          <p class="kicker">02 · Motivation</p>
+          <h2>Why do we need quantization?</h2>
+          <p>Large neural networks contain millions or billions of learned parameters. A parameter is commonly stored as a floating-point number. When every parameter uses 32 bits, the aggregate memory requirement becomes substantial.</p>
+          <p>Consider a hypothetical model with 7 billion parameters. Storing only its weights in FP32 requires approximately 28 billion bytes (about 26.1 GiB). Loading such a model also requires room for runtime data, temporary tensors, the key-value cache, and the inference engine.</p>
+          <h3>Practical reasons</h3>
+          <ul>
+            <li><strong>Lower memory footprint:</strong> more models can fit within a given GPU or device memory budget.</li>
+            <li><strong>Lower memory bandwidth demand:</strong> moving smaller weight tensors can reduce memory traffic, which is important for many inference workloads.</li>
+            <li><strong>Potentially faster inference:</strong> supported low-precision hardware instructions and optimized kernels can improve throughput or latency. This is hardware- and workload-dependent, not guaranteed.</li>
+            <li><strong>Edge deployment:</strong> quantized models are easier to deploy on phones, embedded systems, and other devices with limited resources.</li>
+            <li><strong>Lower operating cost:</strong> a smaller deployment may need fewer or less expensive accelerators, depending on performance requirements.</li>
+          </ul>
+          <figure>
+            <svg viewBox="0 0 940 290" role="img" aria-labelledby="memoryTitle memoryDesc">
+              <title id="memoryTitle">Relative parameter storage by precision</title>
+              <desc id="memoryDesc">FP32 uses 32 bits per parameter, FP16 uses 16, INT8 uses 8, and INT4 uses 4. Each reduction halves the raw storage compared with the previous row.</desc>
+              <text x="25" y="31" font-size="17" font-weight="700" fill="#203b5a">Bits used to store one parameter</text>
+              <g font-family="Arial, sans-serif" font-size="15" fill="#263d58">
+                <text x="26" y="82">FP32</text><text x="26" y="134">FP16 / BF16</text><text x="26" y="186">INT8</text><text x="26" y="238">INT4</text>
+                <text x="850" y="82" text-anchor="end">32 bits</text><text x="850" y="134" text-anchor="end">16 bits</text><text x="850" y="186" text-anchor="end">8 bits</text><text x="850" y="238" text-anchor="end">4 bits</text>
+              </g>
+              <g transform="translate(170,56)">
+                <rect x="0" y="0" width="630" height="28" rx="8" fill="#236ca5"/><rect x="0" y="52" width="315" height="28" rx="8" fill="#278e9b"/><rect x="0" y="104" width="157.5" height="28" rx="8" fill="#389d83"/><rect x="0" y="156" width="78.75" height="28" rx="8" fill="#78a95b"/>
+                <g stroke="#ffffff" stroke-width="2" opacity=".8">
+                  <path d="M39 0V28 M78 0V28 M118 0V28 M157 0V28 M197 0V28 M236 0V28 M276 0V28 M315 0V28 M354 0V28 M394 0V28 M433 0V28 M473 0V28 M512 0V28 M551 0V28 M591 0V28"/>
+                </g>
+              </g>
+              <text x="170" y="274" font-size="13" fill="#61738b">Relative width is proportional to raw storage per parameter.</text>
+            </svg>
+            <figcaption>Each step halves the raw storage per parameter. INT4 values are typically packed, and real formats also need metadata and runtime buffers.</figcaption>
+          </figure>
+          <div class="callout warning">
+            <strong>Quantization does not automatically make every model faster.</strong>
+            Smaller weights can reduce memory traffic, but actual speed depends on accelerator support, quantized kernels, batch size, sequence length, and whether the workload is memory-bound or compute-bound. Benchmark the deployed model on the target hardware.
+          </div>
+        </section>
+
+        <section id="formats">
+          <p class="kicker">03 · Data representation</p>
+          <h2>Understanding FP32, FP16, BF16, INT8 and INT4</h2>
+          <p>Before understanding quantization, it is useful to know how many bits common numeric formats use. A bit is a binary digit, either 0 or 1. More bits generally allow a format to represent a larger set of values, but the exact range and precision depend on how those bits are allocated.</p>
+          <h3>Floating-point formats</h3>
+          <p>IEEE 754 binary32 (<code>FP32</code>) uses 32 bits split into a sign bit, exponent field, and fraction field. The exponent allows floating-point numbers to represent very small and very large magnitudes.</p>
+          <figure>
+            <svg viewBox="0 0 900 205" role="img" aria-labelledby="fpTitle fpDesc">
+              <title id="fpTitle">IEEE 754 FP32 bit layout</title>
+              <desc id="fpDesc">A 32-bit FP32 value contains 1 sign bit, 8 exponent bits, and 23 fraction bits.</desc>
+              <text x="24" y="27" font-size="17" font-weight="700" fill="#203b5a">FP32 · 32 total bits</text>
+              <rect x="25" y="50" width="72" height="58" rx="7" fill="#d96b50"/><rect x="103" y="50" width="352" height="58" rx="7" fill="#277eaa"/><rect x="461" y="50" width="414" height="58" rx="7" fill="#28977f"/>
+              <g fill="#fff" font-family="Arial, sans-serif" font-weight="700" text-anchor="middle"><text x="61" y="84" font-size="16">S</text><text x="279" y="84" font-size="16">Exponent</text><text x="668" y="84" font-size="16">Fraction / significand</text></g>
+              <g fill="#465d76" font-size="14" text-anchor="middle"><text x="61" y="132">1 bit</text><text x="279" y="132">8 bits</text><text x="668" y="132">23 bits</text></g>
+              <text x="25" y="177" fill="#63738a" font-size="13">The fields encode a floating-point value; the decimal digits are not stored as separate chunks.</text>
+            </svg>
+            <figcaption>FP32 bit allocation: 1 sign bit, 8 exponent bits, and 23 fraction bits.</figcaption>
+          </figure>
+          <p>The sign indicates positive or negative, the exponent controls scale, and the fraction contributes significand precision. The number 7.23 is <em>not</em> stored by putting “7” into the exponent and “23” into the fraction; the IEEE 754 encoding is based on a normalized binary representation.</p>
+          <figure>
+            <svg viewBox="0 0 900 190" role="img" aria-labelledby="fp16Title fp16Desc">
+              <title id="fp16Title">FP16 and BF16 bit layouts</title>
+              <desc id="fp16Desc">FP16 contains 1 sign, 5 exponent, and 10 fraction bits. BF16 contains 1 sign, 8 exponent, and 7 fraction bits.</desc>
+              <text x="24" y="25" font-size="17" font-weight="700" fill="#203b5a">FP16 · 16 total bits</text>
+              <rect x="25" y="42" width="55" height="42" rx="5" fill="#d96b50"/><rect x="86" y="42" width="275" height="42" rx="5" fill="#277eaa"/><rect x="367" y="42" width="508" height="42" rx="5" fill="#28977f"/>
+              <g fill="#fff" font-size="14" font-weight="700" text-anchor="middle"><text x="52" y="68">S</text><text x="224" y="68">Exponent</text><text x="621" y="68">Fraction</text></g>
+              <g fill="#536981" font-size="13" text-anchor="middle"><text x="52" y="104">1</text><text x="224" y="104">5</text><text x="621" y="104">10 bits</text></g>
+              <text x="24" y="139" font-size="17" font-weight="700" fill="#203b5a">BF16 · 16 total bits</text>
+              <rect x="25" y="151" width="55" height="28" rx="5" fill="#d96b50"/><rect x="86" y="151" width="440" height="28" rx="5" fill="#277eaa"/><rect x="532" y="151" width="343" height="28" rx="5" fill="#28977f"/>
+              <g fill="#fff" font-size="13" font-weight="700" text-anchor="middle"><text x="52" y="170">S</text><text x="306" y="170">Exponent: 8 bits</text><text x="704" y="170">Fraction: 7 bits</text></g>
+            </svg>
+            <figcaption>FP16 has more fraction bits; BF16 retains the same exponent width as FP32 and therefore a much wider dynamic range.</figcaption>
+          </figure>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Format</th><th>Bits per value</th><th>Typical role</th><th>Important point</th></tr></thead>
+              <tbody>
+                <tr><td><code>FP32</code></td><td>32 (4 bytes)</td><td>Full-precision reference, many training workflows</td><td>High precision and wide dynamic range; largest storage in this table.</td></tr>
+                <tr><td><code>FP16</code></td><td>16 (2 bytes)</td><td>Mixed-precision training and inference</td><td>Half the storage of FP32, but smaller exponent range.</td></tr>
+                <tr><td><code>BF16</code></td><td>16 (2 bytes)</td><td>Training and inference on supported accelerators</td><td>Same exponent width as FP32, fewer fraction bits; useful for dynamic range.</td></tr>
+                <tr><td><code>INT8</code></td><td>8 (1 byte)</td><td>Integer quantization of weights and/or activations</td><td>Needs a mapping such as scale and zero-point to represent real values.</td></tr>
+                <tr><td><code>INT4</code></td><td>4 (0.5 byte)</td><td>Low-bit LLM weight quantization</td><td>Two 4-bit values can be packed into one byte; metadata and packing affect actual size.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout correction">
+            <strong>Terminology correction: FP16 versus INT8</strong>
+            FP32 → FP16 is a lower-precision floating-point conversion. FP32 → INT8 uses a discrete integer representation and usually needs quantization parameters such as scale and zero-point. Both reduce storage, but they are not the same numeric conversion.
+          </div>
+        </section>
+
+        <section id="memory">
+          <p class="kicker">04 · Memory calculations</p>
+          <h2>How much memory can quantization save?</h2>
+          <p>A useful first estimate is:</p>
+          <div class="equation center">Weight storage (bytes) ≈ number of parameters × bits per parameter ÷ 8</div>
+          <p>The following table shows the <strong>raw weight-storage estimate</strong>. It excludes quantization metadata, model files' additional structures, runtime buffers, activations, KV cache, CUDA context, and memory allocator overhead.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Precision</th><th>Bytes per parameter</th><th>7B parameters</th><th>70B parameters</th><th>Relative to FP32</th></tr></thead>
+              <tbody>
+                <tr><td>FP32</td><td>4</td><td>28 GB (≈26.1 GiB)</td><td>280 GB (≈260.8 GiB)</td><td>1×</td></tr>
+                <tr><td>FP16 / BF16</td><td>2</td><td>14 GB (≈13.0 GiB)</td><td>140 GB (≈130.4 GiB)</td><td>½×</td></tr>
+                <tr><td>INT8</td><td>1</td><td>7 GB (≈6.5 GiB)</td><td>70 GB (≈65.2 GiB)</td><td>¼×</td></tr>
+                <tr><td>INT4</td><td>0.5 (packed)</td><td>3.5 GB (≈3.3 GiB)</td><td>35 GB (≈32.6 GiB)</td><td>⅛×</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout warning">
+            <strong>Do not equate model weight size with required VRAM.</strong>
+            A 70B model's theoretical INT4 weights alone are around 32.6 GiB. That already exceeds a nominal 32 GB card when measured in GiB, before adding metadata, the KV cache, temporary buffers, or runtime overhead. Real hardware fit must be tested.
+          </div>
+          <h3>Why is the actual memory requirement larger?</h3>
+          <ul>
+            <li><strong>KV cache:</strong> during autoregressive generation, keys and values for previous tokens are stored. Its size depends on architecture, context length, batch size, and cache precision.</li>
+            <li><strong>Activations and temporary buffers:</strong> intermediate computation consumes memory.</li>
+            <li><strong>Quantization metadata:</strong> scales, zero-points, group information, and packing structures consume additional storage.</li>
+            <li><strong>Runtime overhead:</strong> the framework, kernels, memory allocator, and CUDA context also need resources.</li>
+            <li><strong>Training state:</strong> gradients and optimizer states can require much more memory than inference alone.</li>
+          </ul>
+        </section>
+
+        <section id="mechanics">
+          <p class="kicker">05 · Mathematical foundations</p>
+          <h2>How does quantization work?</h2>
+          <p>Suppose the original model contains floating-point values. We want to map each real-valued value to a smaller set of representable integer levels. An 8-bit unsigned integer has 256 possible values: 0 through 255. A signed 8-bit integer commonly represents −128 through 127, although symmetric quantization often uses −127 through 127 to keep the range balanced around zero.</p>
+          <p>The mapping must answer two questions:</p>
+          <ol>
+            <li>How much real-valued change corresponds to one integer step? This is the <strong>scale</strong>.</li>
+            <li>Which integer represents the real number zero? This is the <strong>zero-point</strong>.</li>
+          </ol>
+          <figure>
+            <svg viewBox="0 0 920 265" role="img" aria-labelledby="mapTitle mapDesc">
+              <title id="mapTitle">Conceptual mapping from floating values to integer quantized values</title>
+              <desc id="mapDesc">A floating-point interval from minimum to maximum is linearly mapped to a discrete integer interval from q-min to q-max. Scale controls step size and zero-point aligns real zero.</desc>
+              <text x="26" y="30" font-size="17" font-weight="700" fill="#203b5a">Real-valued domain</text>
+              <line x1="90" y1="83" x2="830" y2="83" stroke="#2b759e" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="90" cy="83" r="8" fill="#2b759e"/><circle cx="830" cy="83" r="8" fill="#2b759e"/>
+              <text x="90" y="63" font-size="14" text-anchor="middle" fill="#34516e">x_min</text><text x="830" y="63" font-size="14" text-anchor="middle" fill="#34516e">x_max</text>
+              <path d="M460 95 L460 126" stroke="#d18a26" stroke-width="2.5"/><text x="460" y="146" text-anchor="middle" font-size="14" fill="#8b5b11">real zero</text>
+              <path d="M90 164 C250 193 660 193 830 164" fill="none" stroke="#7b8da3" stroke-width="1.7" stroke-dasharray="6 5"/>
+              <text x="26" y="209" font-size="17" font-weight="700" fill="#203b5a">Quantized integer domain</text>
+              <line x1="90" y1="235" x2="830" y2="235" stroke="#1a8b78" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="90" cy="235" r="8" fill="#1a8b78"/><circle cx="830" cy="235" r="8" fill="#1a8b78"/>
+              <text x="90" y="258" font-size="14" text-anchor="middle" fill="#34516e">q_min</text><text x="830" y="258" font-size="14" text-anchor="middle" fill="#34516e">q_max</text>
+              <text x="460" y="222" font-size="13" text-anchor="middle" fill="#34516e">discrete integer levels</text>
+            </svg>
+            <figcaption>The quantizer maps a bounded real interval to a finite integer interval. Values outside the chosen real interval are clipped.</figcaption>
+          </figure>
+          <h3 id="affine">The affine quantization equations</h3>
+          <p>The commonly used affine mapping is:</p>
+          <div class="equation center">q = clip(round(x / s) + z, q<sub>min</sub>, q<sub>max</sub>)</div>
+          <p>Where:</p>
+          <ul>
+            <li><code>x</code> is the original floating-point value.</li>
+            <li><code>q</code> is its quantized integer value.</li>
+            <li><code>s</code> is the positive scale factor.</li>
+            <li><code>z</code> is the integer zero-point.</li>
+            <li><code>q_min</code> and <code>q_max</code> are the allowed integer endpoints.</li>
+            <li><code>round</code> maps to a nearby integer and <code>clip</code> keeps the result inside the integer range.</li>
+          </ul>
+          <p>To approximately reconstruct the original floating-point value, use dequantization:</p>
+          <div class="equation center">x̂ = s × (q − z)</div>
+          <p>The reconstructed value <code>x̂</code> is generally close to, but not exactly equal to, the original value <code>x</code>. The difference is quantization error.</p>
+          <h3>Scale and zero-point from a real range</h3>
+          <p>For an asymmetric affine mapping from a real interval [x<sub>min</sub>, x<sub>max</sub>] to an integer interval [q<sub>min</sub>, q<sub>max</sub>]:</p>
+          <div class="equation center">s = (x<sub>max</sub> − x<sub>min</sub>) / (q<sub>max</sub> − q<sub>min</sub>)</div>
+          <div class="equation center">z = round(q<sub>min</sub> − x<sub>min</sub> / s)</div>
+          <p>The zero-point is then clamped to the representable integer range. Implementations can differ in rounding convention and in how they handle degenerate ranges, so numerical results may differ by one integer step.</p>
+        </section>
+
+        <section id="worked">
+          <p class="kicker">06 · Worked calculations</p>
+          <h2>Two step-by-step quantization examples</h2>
+          <h3>Example A: map 0 to 1000 into unsigned INT8 (0 to 255)</h3>
+          <p>Suppose all values are non-negative and the observed floating-point range is 0 to 1000. We want to map it to unsigned 8-bit integers, whose range is 0 to 255.</p>
+          <div class="equation">x<sub>min</sub> = 0, &nbsp; x<sub>max</sub> = 1000<br>q<sub>min</sub> = 0, &nbsp; q<sub>max</sub> = 255</div>
+          <p>First calculate the scale:</p>
+          <div class="equation">s = (1000 − 0) / (255 − 0) = 1000 / 255 ≈ 3.9216</div>
+          <p>Because real zero maps to integer zero in this example, the zero-point is <code>z = 0</code>. Now quantize a value of 250:</p>
+          <div class="equation">q = round(250 / 3.9216) = round(63.75) = 64</div>
+          <p>So the real value 250 is represented by the integer 64. Dequantizing it gives:</p>
+          <div class="equation">x̂ = 3.9216 × (64 − 0) ≈ 250.98</div>
+          <p>The reconstructed value is approximately 250.98 rather than exactly 250. That small difference is quantization error.</p>
+          <h3>Example B: map −20 to 1000 into unsigned INT8 (0 to 255)</h3>
+          <p>Now the real range includes negative numbers. We still want to use unsigned integers from 0 to 255, so a non-zero zero-point is required.</p>
+          <div class="equation">x<sub>min</sub> = −20, &nbsp; x<sub>max</sub> = 1000<br>q<sub>min</sub> = 0, &nbsp; q<sub>max</sub> = 255</div>
+          <p>Calculate the scale:</p>
+          <div class="equation">s = (1000 − (−20)) / 255 = 1020 / 255 = 4</div>
+          <p>Calculate the zero-point:</p>
+          <div class="equation">z = round(0 − (−20 / 4)) = round(5) = 5</div>
+          <p>Quantize the minimum value −20:</p>
+          <div class="equation">q = round(−20 / 4) + 5 = −5 + 5 = 0</div>
+          <p>Quantize 250:</p>
+          <div class="equation">q = round(250 / 4 + 5) = round(67.5)</div>
+          <p>With NumPy's round-half-to-even behavior, 67.5 rounds to 68. A framework may specify a different tie-breaking rule, so verify the exact rounding behavior when reproducing calculations across libraries.</p>
+          <p>Quantize the maximum value 1000:</p>
+          <div class="equation">q = round(1000 / 4) + 5 = 250 + 5 = 255</div>
+          <div class="callout tip">
+            <strong>What the zero-point accomplishes</strong>
+            It shifts the integer representation so that real zero is represented exactly. In this example, real 0 maps to integer 5, while −20 maps to 0 and 1000 maps to 255.
+          </div>
+        </section>
+
+        <section id="schemes">
+          <p class="kicker">07 · Quantization schemes</p>
+          <h2>Symmetric vs. asymmetric quantization</h2>
+          <p>The difference is how the real-valued range is selected and whether zero is placed at the center of the integer range.</p>
+          <div class="grid-2">
+            <div class="mini-card">
+              <h3>Symmetric quantization</h3>
+              <p>The real range is centered around zero, commonly as [−α, +α]. The integer range is also centered around zero, commonly [−127, +127] for an 8-bit signed symmetric scheme.</p>
+              <div class="equation">s = α / 127, &nbsp; z = 0</div>
+              <p class="small">Simple zero-point handling; often used for weights whose distribution is roughly centered around zero.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Asymmetric (affine) quantization</h3>
+              <p>The observed minimum and maximum are mapped to the full integer range. The range does not need to be centered around zero, so the zero-point may be non-zero.</p>
+              <div class="equation">s = (x<sub>max</sub> − x<sub>min</sub>) / (q<sub>max</sub> − q<sub>min</sub>)</div>
+              <p class="small">Can use the available integer levels more efficiently for skewed or non-negative values, such as many activation tensors.</p>
+            </div>
+          </div>
+          <figure>
+            <svg viewBox="0 0 920 310" role="img" aria-labelledby="symTitle symDesc">
+              <title id="symTitle">Symmetric and asymmetric quantization ranges</title>
+              <desc id="symDesc">The top range is symmetric around zero from minus alpha to plus alpha. The bottom range is asymmetric from a negative minimum to a much larger positive maximum, with a nonzero integer zero point.</desc>
+              <text x="24" y="29" font-size="17" font-weight="700" fill="#203b5a">Symmetric: range balanced around zero</text>
+              <line x1="120" y1="83" x2="800" y2="83" stroke="#2878a8" stroke-width="5" stroke-linecap="round"/>
+              <line x1="460" y1="54" x2="460" y2="108" stroke="#d28a25" stroke-width="3"/>
+              <circle cx="120" cy="83" r="7" fill="#2878a8"/><circle cx="800" cy="83" r="7" fill="#2878a8"/>
+              <text x="120" y="62" text-anchor="middle" font-size="14" fill="#36516d">−α</text><text x="460" y="48" text-anchor="middle" font-size="14" fill="#9a6417">0</text><text x="800" y="62" text-anchor="middle" font-size="14" fill="#36516d">+α</text>
+              <text x="24" y="161" font-size="17" font-weight="700" fill="#203b5a">Asymmetric: observed range not centered around zero</text>
+              <line x1="120" y1="220" x2="800" y2="220" stroke="#218b77" stroke-width="5" stroke-linecap="round"/>
+              <line x1="133" y1="193" x2="133" y2="247" stroke="#d28a25" stroke-width="3"/>
+              <circle cx="120" cy="220" r="7" fill="#218b77"/><circle cx="800" cy="220" r="7" fill="#218b77"/>
+              <text x="120" y="199" text-anchor="middle" font-size="14" fill="#36516d">−20</text><text x="133" y="270" text-anchor="middle" font-size="13" fill="#9a6417">real 0 aligns with z</text><text x="800" y="199" text-anchor="middle" font-size="14" fill="#36516d">1000</text>
+              <text x="460" y="297" text-anchor="middle" font-size="13" fill="#62758d">The zero-point shifts the integer code range to preserve real zero.</text>
+            </svg>
+            <figcaption>Conceptual ranges only. Actual ranges and integer endpoints are selected by the quantization scheme and calibration process.</figcaption>
+          </figure>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>Symmetric</th><th>Asymmetric / affine</th></tr></thead>
+              <tbody>
+                <tr><td>Real range</td><td>Centered around zero</td><td>Can be any observed interval</td></tr>
+                <tr><td>Zero-point</td><td>Usually 0 for signed symmetric quantization</td><td>May be non-zero</td></tr>
+                <tr><td>Typical use</td><td>Weights with approximately zero-centered distributions</td><td>Skewed or non-negative activations</td></tr>
+                <tr><td>Advantage</td><td>Simpler arithmetic in many implementations</td><td>Uses integer levels efficiently for offset distributions</td></tr>
+                <tr><td>Potential drawback</td><td>May waste resolution if the data is strongly skewed</td><td>Zero-point arithmetic can add implementation complexity</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout correction">
+            <strong>Important correction about Batch Normalization</strong>
+            Batch Normalization is <em>not</em> a quantization technique and is not the definition of symmetric quantization. It normalizes activations during network computation. Symmetric quantization is defined by a quantization range centered around zero and, in the common signed case, a zero-point of zero. Batch Normalization can affect activation or weight distributions, but the two concepts are separate.
+          </div>
+          <h3>Signed versus unsigned 8-bit values</h3>
+          <p><code>uint8</code> represents integers from 0 to 255. <code>int8</code> represents integers from −128 to 127. A non-negative real range can be mapped to <code>uint8</code>. A real range that includes positive and negative values can use signed integers or an unsigned range with a suitable zero-point. Do not confuse “symmetric” with “unsigned”: symmetric quantization is commonly signed and centered around zero.</p>
+        </section>
+
+        <section id="calibration">
+          <p class="kicker">08 · Calibration</p>
+          <h2>What is calibration in model quantization?</h2>
+          <p><strong>Calibration is the process of estimating the real-value ranges and quantization parameters</strong>—such as scale and zero-point—that will be used to quantize tensors. It is particularly important for activations, because their values depend on the inputs passed through the network.</p>
+          <p>For weights, the tensor values are already available in the trained model, so weight ranges can be measured directly. For activations, a representative calibration dataset is usually passed through the model. Observers collect statistics such as minimums, maximums, or histograms; those statistics are then used to choose ranges.</p>
+          <figure>
+            <svg viewBox="0 0 940 220" role="img" aria-labelledby="calTitle calDesc">
+              <title id="calTitle">Calibration workflow</title>
+              <desc id="calDesc">Representative inputs pass through a pre-trained model. Observers record activation distributions, a calibration algorithm selects ranges, and scale and zero-point are calculated for quantization.</desc>
+              <defs><marker id="arrowCal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#6b7f95"/></marker></defs>
+              <g font-family="Arial, sans-serif" text-anchor="middle">
+                <rect x="20" y="65" width="170" height="86" rx="12" fill="#e9f2ff" stroke="#9ab9e7"/><text x="105" y="99" font-size="16" font-weight="700" fill="#204b78">Representative</text><text x="105" y="121" font-size="16" font-weight="700" fill="#204b78">dataset</text>
+                <rect x="255" y="65" width="170" height="86" rx="12" fill="#eaf7f5" stroke="#91cfc2"/><text x="340" y="99" font-size="16" font-weight="700" fill="#17675e">Pre-trained</text><text x="340" y="121" font-size="16" font-weight="700" fill="#17675e">model</text>
+                <rect x="490" y="65" width="170" height="86" rx="12" fill="#fff5e2" stroke="#e8c77d"/><text x="575" y="99" font-size="16" font-weight="700" fill="#8a5a0b">Observers</text><text x="575" y="121" font-size="13" fill="#8a5a0b">ranges / histograms</text>
+                <rect x="725" y="65" width="190" height="86" rx="12" fill="#f1edff" stroke="#bdb0e9"/><text x="820" y="99" font-size="16" font-weight="700" fill="#59418d">Scale + zero-point</text><text x="820" y="121" font-size="13" fill="#59418d">quantization parameters</text>
+                <g stroke="#6b7f95" stroke-width="2.5" marker-end="url(#arrowCal)"><line x1="190" y1="108" x2="248" y2="108"/><line x1="425" y1="108" x2="483" y2="108"/><line x1="660" y1="108" x2="718" y2="108"/></g>
+              </g>
+              <text x="470" y="193" text-anchor="middle" font-size="13" fill="#60738b">The goal is to estimate ranges that represent real inference-time data.</text>
+            </svg>
+            <figcaption>Calibration estimates quantization parameters; it is not itself the act of compressing every weight.</figcaption>
+          </figure>
+          <h3>Common calibration strategies</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Method</th><th>How it works</th><th>When it is useful</th></tr></thead>
+              <tbody>
+                <tr><td>Min–max</td><td>Uses the smallest and largest observed values.</td><td>Simple baseline; can be sensitive to outliers.</td></tr>
+                <tr><td>Moving-average min–max</td><td>Tracks smoothed minimum and maximum values across batches.</td><td>Can provide more stable estimates when activation ranges vary.</td></tr>
+                <tr><td>Percentile clipping</td><td>Chooses a range that retains a selected percentage of observed values.</td><td>Useful when a small number of extreme values would otherwise dominate the range.</td></tr>
+                <tr><td>Histogram / entropy</td><td>Uses a value histogram and selects a range based on a distribution or divergence criterion.</td><td>Can balance clipping error and quantization resolution.</td></tr>
+                <tr><td>MSE-based range selection</td><td>Chooses a range intended to minimize reconstruction mean-squared error.</td><td>Useful when minimizing numerical reconstruction error is the target.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Why does the calibration dataset matter?</h3>
+          <p>Imagine a language model deployed for customer support, but calibration is performed only on short, generic sentences. If production prompts contain long conversations, code blocks, or multilingual text, activation distributions may differ. Poorly estimated ranges can cause clipping or excessive rounding error.</p>
+          <ul>
+            <li>Use representative inputs from the intended workload.</li>
+            <li>Include realistic prompt lengths and input patterns.</li>
+            <li>Include important edge cases, not only average examples.</li>
+            <li>Validate the quantized model on a separate evaluation set.</li>
+          </ul>
+          <div class="callout info"><strong>Keep the terms separate</strong><strong>Calibration</strong> selects or estimates the ranges and qparams. <strong>Quantization</strong> maps the values into the lower-bit representation. They are connected steps, but they are not synonyms.</div>
+        </section>
+
+        <section id="granularity">
+          <p class="kicker">09 · Practical design choices</p>
+          <h2>Per-tensor, per-channel and group-wise quantization</h2>
+          <p>Scale and zero-point do not always need to be shared by an entire model tensor. The granularity determines how many independent quantization parameter sets are used.</p>
+          <div class="grid-3">
+            <div class="mini-card"><h3>Per-tensor</h3><p>One scale and zero-point are used for an entire tensor. It is simple and has low metadata overhead, but may not fit every channel's distribution equally well.</p></div>
+            <div class="mini-card"><h3>Per-channel</h3><p>Each output channel (or another selected channel axis) gets its own scale, often improving weight quantization accuracy.</p></div>
+            <div class="mini-card"><h3>Group-wise</h3><p>A weight matrix is divided into smaller groups, each with its own scale and sometimes zero-point. Group size trades metadata overhead against local precision.</p></div>
+          </div>
+          <p>LLM quantization commonly uses weight-only and group-wise schemes because different output channels or weight groups can have different value distributions. Smaller groups can improve accuracy but require more metadata and may change kernel efficiency.</p>
+          <h3>Weight-only versus weight-and-activation quantization</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Approach</th><th>What is quantized?</th><th>Why use it?</th></tr></thead>
+              <tbody>
+                <tr><td>Weight-only</td><td>Model weights; activations may remain FP16/BF16.</td><td>Reduces model-weight memory while keeping activation computation in a higher precision.</td></tr>
+                <tr><td>Weight + activation</td><td>Both weights and intermediate activations.</td><td>Can reduce activation memory and enable more integer arithmetic, depending on hardware.</td></tr>
+                <tr><td>Dynamic activation quantization</td><td>Activation ranges are determined at runtime.</td><td>Adapts to each input; introduces runtime range-estimation overhead.</td></tr>
+                <tr><td>Static activation quantization</td><td>Activation ranges are calibrated ahead of time.</td><td>Can support efficient inference when calibration matches production inputs.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="ptq">
+          <p class="kicker">10 · Quantization workflow</p>
+          <h2>Post-Training Quantization (PTQ)</h2>
+          <p><strong>Post-Training Quantization</strong> is applied after a model has completed its original training. The trained model's weights are available, and the quantization workflow converts them—and, depending on the method, possibly its activations—to lower precision without retraining the entire model.</p>
+          <figure>
+            <svg viewBox="0 0 920 225" role="img" aria-labelledby="ptqTitle ptqDesc">
+              <title id="ptqTitle">Post-training quantization pipeline</title>
+              <desc id="ptqDesc">A trained model and a representative calibration dataset are used to determine quantization ranges and parameters. The model is then converted to a quantized model and evaluated.</desc>
+              <defs><marker id="arrowPtq" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#6b7f95"/></marker></defs>
+              <g font-family="Arial, sans-serif" text-anchor="middle">
+                <rect x="15" y="70" width="155" height="75" rx="12" fill="#eaf2ff" stroke="#9ebce8"/><text x="92" y="101" font-size="15" font-weight="700" fill="#204b78">Pre-trained</text><text x="92" y="122" font-size="15" font-weight="700" fill="#204b78">model</text>
+                <rect x="205" y="70" width="155" height="75" rx="12" fill="#fff5e2" stroke="#e8c77d"/><text x="282" y="101" font-size="15" font-weight="700" fill="#8a5a0b">Calibration</text><text x="282" y="122" font-size="13" fill="#8a5a0b">data + observers</text>
+                <rect x="395" y="70" width="155" height="75" rx="12" fill="#eaf7f5" stroke="#91cfc2"/><text x="472" y="101" font-size="15" font-weight="700" fill="#17675e">Compute</text><text x="472" y="122" font-size="13" fill="#17675e">scale / zero-point</text>
+                <rect x="585" y="70" width="145" height="75" rx="12" fill="#f1edff" stroke="#bdb0e9"/><text x="657" y="101" font-size="15" font-weight="700" fill="#59418d">Convert</text><text x="657" y="122" font-size="13" fill="#59418d">weights / ops</text>
+                <rect x="765" y="70" width="140" height="75" rx="12" fill="#eaf8f0" stroke="#a6d8bb"/><text x="835" y="101" font-size="15" font-weight="700" fill="#176443">Quantized</text><text x="835" y="122" font-size="15" font-weight="700" fill="#176443">model</text>
+                <g stroke="#6b7f95" stroke-width="2.3" marker-end="url(#arrowPtq)"><line x1="170" y1="108" x2="198" y2="108"/><line x1="360" y1="108" x2="388" y2="108"/><line x1="550" y1="108" x2="578" y2="108"/><line x1="730" y1="108" x2="758" y2="108"/></g>
+              </g>
+              <text x="460" y="190" text-anchor="middle" font-size="13" fill="#60738b">Then compare task quality, latency, throughput and memory against the original model.</text>
+            </svg>
+            <figcaption>PTQ starts from a trained checkpoint and converts it without a full retraining run.</figcaption>
+          </figure>
+          <h3>Common PTQ variants</h3>
+          <ul>
+            <li><strong>Dynamic PTQ:</strong> weights are quantized ahead of time, while activation ranges are calculated dynamically during inference. This avoids a separate static activation-calibration pass but can add runtime overhead.</li>
+            <li><strong>Static PTQ:</strong> activation ranges are estimated ahead of time using representative calibration data, then used during deployment.</li>
+            <li><strong>Weight-only PTQ:</strong> weights are compressed, while activations and much of the computation may remain FP16/BF16. This is common in LLM inference.</li>
+          </ul>
+          <h3>Advantages and limitations</h3>
+          <div class="grid-2">
+            <div class="mini-card"><h4>Advantages</h4><ul><li>Can be applied to an existing checkpoint.</li><li>Usually less expensive than retraining.</li><li>Useful for deployment and inference optimization.</li></ul></div>
+            <div class="mini-card"><h4>Limitations</h4><ul><li>Quantization error can reduce task quality.</li><li>Outliers and poor calibration may harm accuracy.</li><li>Very low bit-widths may need specialized methods or adaptation.</li></ul></div>
+          </div>
+        </section>
+
+        <section id="qat">
+          <p class="kicker">11 · Training-time adaptation</p>
+          <h2>Quantization-Aware Training (QAT)</h2>
+          <p><strong>Quantization-Aware Training</strong> makes the model experience quantization effects during training or fine-tuning. The training graph inserts fake-quantization operations (or quantize/dequantize simulation nodes) so the forward pass reflects rounding and clipping errors that will occur in the deployed low-precision model.</p>
+          <p>The model can then adjust its trainable parameters to become more robust to those errors. In common implementations, the quantization operations are simulated during training; the final deployment artifact is converted to the target quantized representation.</p>
+          <figure>
+            <svg viewBox="0 0 920 245" role="img" aria-labelledby="qatTitle qatDesc">
+              <title id="qatTitle">Quantization-aware training workflow</title>
+              <desc id="qatDesc">A pre-trained or initialized model is instrumented with fake quantization nodes. Training data flows through the simulated quantized network, loss is calculated, gradients update the trainable parameters, and the resulting model is converted for deployment.</desc>
+              <defs><marker id="arrowQat" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#6b7f95"/></marker></defs>
+              <g font-family="Arial, sans-serif" text-anchor="middle">
+                <rect x="20" y="72" width="150" height="78" rx="12" fill="#eaf2ff" stroke="#9ebce8"/><text x="95" y="102" font-size="15" font-weight="700" fill="#204b78">Pre-trained</text><text x="95" y="123" font-size="15" font-weight="700" fill="#204b78">model</text>
+                <rect x="215" y="72" width="165" height="78" rx="12" fill="#fff5e2" stroke="#e8c77d"/><text x="297" y="102" font-size="15" font-weight="700" fill="#8a5a0b">Fake-quant</text><text x="297" y="123" font-size="13" fill="#8a5a0b">Q / DQ simulation</text>
+                <rect x="425" y="72" width="150" height="78" rx="12" fill="#eaf7f5" stroke="#91cfc2"/><text x="500" y="102" font-size="15" font-weight="700" fill="#17675e">Training data</text><text x="500" y="123" font-size="13" fill="#17675e">forward pass</text>
+                <rect x="620" y="72" width="130" height="78" rx="12" fill="#f1edff" stroke="#bdb0e9"/><text x="685" y="102" font-size="15" font-weight="700" fill="#59418d">Loss +</text><text x="685" y="123" font-size="15" font-weight="700" fill="#59418d">gradients</text>
+                <rect x="790" y="72" width="115" height="78" rx="12" fill="#eaf8f0" stroke="#a6d8bb"/><text x="847" y="102" font-size="15" font-weight="700" fill="#176443">Updated</text><text x="847" y="123" font-size="15" font-weight="700" fill="#176443">model</text>
+                <g stroke="#6b7f95" stroke-width="2.3" marker-end="url(#arrowQat)"><line x1="170" y1="111" x2="208" y2="111"/><line x1="380" y1="111" x2="418" y2="111"/><line x1="575" y1="111" x2="613" y2="111"/><line x1="750" y1="111" x2="783" y2="111"/></g>
+                <path d="M685 160 C685 213 297 213 297 159" fill="none" stroke="#8a65bd" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrowQat)"/>
+                <text x="490" y="224" font-size="13" fill="#6c5794">Backpropagation adapts trainable parameters to simulated quantization error</text>
+              </g>
+            </svg>
+            <figcaption>QAT includes quantization simulation in the training loop; it is not merely a post-training conversion followed by ordinary fine-tuning.</figcaption>
+          </figure>
+          <h3>Why can QAT preserve accuracy better?</h3>
+          <p>PTQ exposes a fixed trained model to lower precision after training has finished. QAT exposes the model to simulated rounding and clipping during optimization. The training process can therefore adjust parameters to reduce the effect of quantization noise on the task's loss.</p>
+          <p>Many frameworks use a <strong>straight-through estimator (STE)</strong> or a related gradient approximation because rounding is not differentiable in the ordinary sense. The exact implementation depends on the framework and quantization method.</p>
+          <div class="callout warning">
+            <strong>QAT is not a guarantee of zero accuracy loss.</strong>
+            It can improve robustness compared with PTQ, but the result depends on architecture, bit width, training data, calibration choices, quantization granularity, and deployment kernels. It also costs additional training compute.
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Dimension</th><th>PTQ</th><th>QAT</th></tr></thead>
+              <tbody>
+                <tr><td>When?</td><td>After the original training is complete</td><td>During training or a quantization-aware fine-tuning stage</td></tr>
+                <tr><td>Training data needed?</td><td>Calibration data may be needed for static activation quantization; no full retraining is required</td><td>Training or fine-tuning data is required</td></tr>
+                <tr><td>Quantization effects in training?</td><td>Not usually simulated during the original training</td><td>Simulated using fake-quant or Q/DQ operations</td></tr>
+                <tr><td>Compute cost</td><td>Usually lower</td><td>Higher because the model is trained further</td></tr>
+                <tr><td>Accuracy</td><td>May lose accuracy, particularly at very low bit widths</td><td>Can recover or preserve more accuracy, but is not guaranteed</td></tr>
+                <tr><td>Typical decision</td><td>Try first for a pretrained deployment checkpoint</td><td>Consider when PTQ quality is insufficient and training resources are available</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout correction">
+            <strong>Correct relationship with fine-tuning</strong>
+            Fine-tuning does not automatically mean QAT. A model can be fine-tuned in FP16/BF16, fine-tuned with adapters, or trained with a quantization-aware procedure. QAT is specifically the approach where quantization effects are simulated as part of training.
+          </div>
+        </section>
+
+        <section id="llm">
+          <p class="kicker">12 · Large language models</p>
+          <h2>How quantization is used with LLMs</h2>
+          <p>LLMs are Transformer-based neural networks with large weight matrices in attention and feed-forward layers. These matrices dominate parameter storage. Quantizing those weights can substantially reduce the memory needed to load a model for inference.</p>
+          <h3>Common LLM precision choices</h3>
+          <ul>
+            <li><strong>FP16 / BF16:</strong> common reduced-precision floating-point formats for loading, training, or inference on supported accelerators.</li>
+            <li><strong>INT8:</strong> an 8-bit representation that can reduce weight memory substantially. Some methods handle activation outliers separately to preserve accuracy.</li>
+            <li><strong>4-bit:</strong> very low-bit weight representations that can make larger models practical on constrained GPUs, often with group-wise scales and specialized formats.</li>
+          </ul>
+          <h3>Weight-only quantization and mixed-precision computation</h3>
+          <p>A common LLM inference configuration stores weights in 4-bit or 8-bit form but performs some computations using FP16 or BF16. This is often described as weight-only quantization or a mixed-precision quantized workflow. “The model is 4-bit” does not necessarily mean every tensor and every intermediate operation runs in 4-bit arithmetic.</p>
+          <h3>LLM.int8 and outlier handling</h3>
+          <p>Some transformer activations contain a small number of unusually large values (outliers). A naïve INT8 conversion can cause these values to dominate the scaling range and reduce precision for the majority of values. LLM.int8-style methods use vector-wise quantization and handle outlier dimensions separately in higher precision. This is one example of a quantization method designed around Transformer behavior.</p>
+          <h3>QLoRA is related to quantization, but it is not the same as classical QAT</h3>
+          <p><strong>QLoRA</strong> is a memory-efficient fine-tuning approach. It loads a frozen base model in 4-bit form and trains a relatively small set of low-rank adapter parameters. The frozen base weights are not updated in the same way as a full-parameter QAT workflow. Adapter parameters and computation may use a higher precision such as BF16 or FP16.</p>
+          <figure>
+            <svg viewBox="0 0 920 245" role="img" aria-labelledby="qloraTitle qloraDesc">
+              <title id="qloraTitle">Conceptual QLoRA architecture</title>
+              <desc id="qloraDesc">A frozen quantized base model is used for forward computation while trainable low-rank adapter weights are inserted into selected layers. Backpropagation updates the adapter weights rather than the frozen base model weights.</desc>
+              <defs><marker id="arrowQlora" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#6b7f95"/></marker></defs>
+              <rect x="35" y="55" width="340" height="125" rx="14" fill="#eaf2ff" stroke="#9ebce8" stroke-width="2"/>
+              <text x="205" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#204b78">Frozen base LLM</text>
+              <text x="205" y="111" text-anchor="middle" font-size="15" fill="#204b78">4-bit quantized weights</text>
+              <text x="205" y="139" text-anchor="middle" font-size="13" fill="#45617f">No base-weight updates</text>
+              <rect x="545" y="55" width="340" height="125" rx="14" fill="#eaf8f0" stroke="#a6d8bb" stroke-width="2"/>
+              <text x="715" y="84" text-anchor="middle" font-size="17" font-weight="700" fill="#176443">LoRA adapters</text>
+              <text x="715" y="111" text-anchor="middle" font-size="15" fill="#176443">Small trainable low-rank matrices</text>
+              <text x="715" y="139" text-anchor="middle" font-size="13" fill="#3e755e">Gradients update adapter parameters</text>
+              <path d="M375 116 H535" stroke="#6b7f95" stroke-width="2.5" marker-end="url(#arrowQlora)"/>
+              <text x="455" y="100" text-anchor="middle" font-size="13" fill="#60738b">combined</text>
+              <text x="460" y="218" text-anchor="middle" font-size="13" fill="#60738b">Conceptual view: quantized base + trainable adapters; exact implementations vary.</text>
+            </svg>
+            <figcaption>QLoRA reduces fine-tuning memory by keeping the quantized base model frozen and training small adapter weights.</figcaption>
+          </figure>
+          <div class="callout info">
+            <strong>Connection to a fine-tuning tutorial</strong>
+            If a Llama fine-tuning notebook loads the base model with a 4-bit <code>BitsAndBytesConfig</code> and then attaches LoRA adapters, it is typically demonstrating a QLoRA-style workflow—not proof that every fine-tuning workflow uses QAT.
+          </div>
+          <h3>Where quantization fits in the LLM lifecycle</h3>
+          <ol class="step-list">
+            <li><strong>Choose a base model:</strong> identify the checkpoint, architecture, license, context length, and serving hardware.</li>
+            <li><strong>Choose the objective:</strong> inference memory reduction, lower latency, edge deployment, or fine-tuning within a GPU budget.</li>
+            <li><strong>Select a precision and method:</strong> FP16/BF16, INT8, 4-bit weight-only, or a supported activation-aware scheme.</li>
+            <li><strong>Quantize or load a quantized checkpoint:</strong> configure the backend and quantization parameters.</li>
+            <li><strong>Evaluate:</strong> compare task quality, latency, throughput, peak VRAM, and generation behavior against the reference model.</li>
+            <li><strong>Deploy:</strong> serve only after validating the same hardware and workload profile expected in production.</li>
+          </ol>
+        </section>
+
+        <section id="code">
+          <p class="kicker">13 · Hands-on code</p>
+          <h2>Python examples</h2>
+          <p>The first example implements a simple affine quantizer so the scale and zero-point calculation are visible. It is educational code—not a replacement for optimized production quantization libraries.</p>
+          <h3>Example 1: implement affine quantization with NumPy</h3>
+          <div class="code-label">Python · Manual quantization and dequantization</div>
+          <pre><code>import numpy as np
+
+
+def quantize_affine_uint8(values):
+    """Quantize a non-empty array into uint8 using min-max affine mapping."""
+    x = np.asarray(values, dtype=np.float32)
+    if x.size == 0:
+        raise ValueError("values must contain at least one element")
+
+    x_min = float(np.min(x))
+    x_max = float(np.max(x))
+    q_min, q_max = 0, 255
+
+    # Avoid division by zero for a constant-valued tensor.
+    if np.isclose(x_max, x_min):
+        scale = 1.0
+        zero_point = int(np.clip(np.rint(q_min - x_min), q_min, q_max))
+    else:
+        scale = (x_max - x_min) / (q_max - q_min)
+        zero_point = int(np.clip(
+            np.rint(q_min - x_min / scale), q_min, q_max
+        ))
+
+    # np.rint uses round-half-to-even (banker's rounding).
+    q = np.clip(np.rint(x / scale + zero_point), q_min, q_max)
+    return q.astype(np.uint8), scale, zero_point
+
+
+def dequantize_uint8(q, scale, zero_point):
+    """Reconstruct approximate float32 values from uint8 values."""
+    q = np.asarray(q, dtype=np.uint8)
+    return scale * (q.astype(np.float32) - zero_point)
+
+
+values = np.array([-20.0, 0.0, 250.0, 1000.0], dtype=np.float32)
+quantized, scale, zero_point = quantize_affine_uint8(values)
+reconstructed = dequantize_uint8(quantized, scale, zero_point)
+
+print("Original:      ", values)
+print("Quantized:     ", quantized)
+print("Scale:         ", scale)
+print("Zero-point:    ", zero_point)
+print("Reconstructed:", reconstructed)</code></pre>
+          <p class="code-label">Illustrative output (rounding can vary by implementation)</p>
+          <pre><code>Original:       [ -20.    0.  250. 1000.]
+Quantized:      [  0   5  68 255]
+Scale:          4.0
+Zero-point:     5
+Reconstructed: [ -20.    0.  252. 1000.]</code></pre>
+          <p>The original value 250 is reconstructed as approximately 252 in this implementation because the quantized value is an integer step. The error is expected; quantization is a lossy approximation.</p>
+          <div class="callout warning">
+            <strong>Production note</strong>
+            Real quantization libraries support signed and unsigned types, per-channel/group scales, specialized rounding, clipping policies, packing, backend-specific operators, and numerical edge cases. The function above is deliberately small so the math is easy to inspect.
+          </div>
+          <h3>Example 2: load a Transformers model in 4-bit with bitsandbytes</h3>
+          <p>This example shows the common shape of a 4-bit LLM loading configuration. Replace the model ID with a checkpoint you are permitted to access. The exact package versions, GPU support, and configuration options should be checked against the versions installed in your environment.</p>
+          <div class="code-label">Python · Hugging Face Transformers + bitsandbytes</div>
+          <pre><code>import torch
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
+
+MODEL_ID = "your-org/your-instruct-model"
+
+quant_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+)
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=quant_config,
+    device_map="auto",
+)
+
+prompt = "Explain model quantization in simple terms."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+with torch.inference_mode():
+    output_ids = model.generate(
+        **inputs,
+        max_new_tokens=120,
+        do_sample=False,
+    )
+
+print(tokenizer.decode(output_ids[0], skip_special_tokens=True))</code></pre>
+          <p class="small muted">Use <code>torch.float16</code> for the compute dtype if BF16 is not supported by the selected hardware. This does not imply that every model operation or activation is stored in 4-bit form.</p>
+          <h3>Example 3: load a model in 8-bit</h3>
+          <div class="code-label">Python · 8-bit model loading</div>
+          <pre><code>from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+
+MODEL_ID = "your-org/your-instruct-model"
+
+quant_config = BitsAndBytesConfig(load_in_8bit=True)
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=quant_config,
+    device_map="auto",
+)</code></pre>
+          <p>These examples demonstrate quantized inference loading. To fine-tune with adapters, a PEFT/LoRA workflow adds trainable adapter modules; a QLoRA workflow typically uses a frozen 4-bit base model with trainable adapters. That is a separate step from simply loading a quantized model.</p>
+        </section>
+
+        <section id="tradeoffs">
+          <p class="kicker">14 · Engineering decisions</p>
+          <h2>Accuracy, speed and memory trade-offs</h2>
+          <p>Quantization is a compression technique, so some numerical information is generally lost when a continuous range is mapped to a finite set of integer levels. The engineering goal is not merely to make the model smaller; it is to find a precision and method that meet the application's quality and performance requirements.</p>
+          <h3>Sources of quality degradation</h3>
+          <ul>
+            <li><strong>Rounding:</strong> nearby real numbers may map to the same integer.</li>
+            <li><strong>Clipping:</strong> values outside the chosen calibration range map to an endpoint.</li>
+            <li><strong>Outliers:</strong> extreme values can stretch the range and reduce resolution for the majority of values.</li>
+            <li><strong>Coarse granularity:</strong> one scale for an entire tensor may not represent every channel or group equally well.</li>
+            <li><strong>Very low bit width:</strong> fewer levels make reconstruction more difficult, especially for sensitive layers.</li>
+          </ul>
+          <h3>What should be measured?</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Metric</th><th>What it tells you</th><th>Example measurement</th></tr></thead>
+              <tbody>
+                <tr><td>Task quality</td><td>Whether the model still performs its intended task.</td><td>Accuracy, exact match, perplexity, benchmark score, or human evaluation.</td></tr>
+                <tr><td>Peak VRAM</td><td>Whether the model fits on target hardware under realistic load.</td><td>Maximum allocated GPU memory at target context and batch size.</td></tr>
+                <tr><td>Time to first token</td><td>How long a user waits before generation begins.</td><td>TTFT in milliseconds.</td></tr>
+                <tr><td>Decode throughput</td><td>How fast output tokens are generated.</td><td>Tokens per second at target batch size and sequence length.</td></tr>
+                <tr><td>End-to-end latency</td><td>The user-observed response time.</td><td>Prompt processing + generation + serving overhead.</td></tr>
+                <tr><td>Stability</td><td>Whether outputs remain reliable across input patterns.</td><td>Long prompts, multilingual input, code, structured output, edge cases.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Recommended evaluation method</h3>
+          <ol>
+            <li>Keep an unquantized FP16/BF16 or FP32 checkpoint as a reference.</li>
+            <li>Use the same evaluation prompts, decoding parameters, and hardware for each candidate.</li>
+            <li>Measure quality, peak memory, TTFT, decode speed, and end-to-end latency.</li>
+            <li>Test multiple context lengths and batch sizes; KV cache can change the memory picture.</li>
+            <li>Choose the smallest or fastest model that still meets the quality threshold.</li>
+          </ol>
+        </section>
+
+        <section id="plan">
+          <p class="kicker">15 · Learning and implementation roadmap</p>
+          <h2>Plan of action</h2>
+          <p>Use this sequence to move from the mathematics in the lecture to a real quantized LLM deployment.</p>
+          <ol class="step-list">
+            <li><strong>Master the data types.</strong> Be able to explain the difference between FP32, FP16, BF16, INT8 and INT4, including bits per value and approximate memory.</li>
+            <li><strong>Work through the quantization equations.</strong> Calculate scale and zero-point for one non-negative range and one range containing negative values. Verify by quantizing and dequantizing sample values.</li>
+            <li><strong>Understand calibration.</strong> Learn why representative data is needed for activation ranges and compare min–max, percentile, histogram, and moving-average strategies.</li>
+            <li><strong>Compare PTQ and QAT.</strong> Draw each workflow from memory. Explain why QAT simulates rounding/clipping during training and why PTQ is usually cheaper to apply.</li>
+            <li><strong>Run a quantized inference experiment.</strong> Load one accessible model in FP16/BF16, then in 8-bit or 4-bit. Record memory, latency, and output quality.</li>
+            <li><strong>Connect quantization to fine-tuning.</strong> Identify whether a notebook uses PTQ, QAT, or QLoRA. Do not treat those terms as interchangeable.</li>
+            <li><strong>Write an evaluation report.</strong> Compare the reference and quantized model on a fixed test set and explain the quality/performance trade-off.</li>
+          </ol>
+          <div class="callout tip">
+            <strong>Suggested hands-on deliverable</strong>
+            Create a small notebook with (1) the NumPy quantizer, (2) a 4-bit or 8-bit model-loading example, and (3) a comparison table containing model size, peak VRAM, latency, tokens/second, and task-quality results.
+          </div>
+        </section>
+
+        <section id="interview">
+          <p class="kicker">16 · Interview preparation</p>
+          <h2>Interview questions and answers</h2>
+          <div class="qa"><h3>1. What is model quantization?</h3><p>Model quantization reduces the number of bits used to represent weights and/or activations, for example by converting FP32 values to INT8 or a 4-bit format. This reduces memory use and can improve inference efficiency when supported by the hardware.</p></div>
+          <div class="qa"><h3>2. Why do we quantize an LLM?</h3><p>To reduce model-weight memory, lower memory bandwidth requirements, and make deployment on smaller GPUs or edge devices more practical. Speed improvements depend on the hardware and kernels.</p></div>
+          <div class="qa"><h3>3. What is the scale factor?</h3><p>Scale determines how much real-valued distance corresponds to one integer step. In affine quantization, it is commonly calculated as the real range divided by the integer range.</p></div>
+          <div class="qa"><h3>4. What is a zero-point?</h3><p>The zero-point is the integer value used to represent real zero. It allows an asymmetric real-valued interval to map correctly into an integer interval.</p></div>
+          <div class="qa"><h3>5. What is the difference between symmetric and asymmetric quantization?</h3><p>Symmetric quantization uses a real range centered at zero and commonly a zero-point of zero. Asymmetric quantization maps the observed minimum and maximum independently and may require a non-zero zero-point.</p></div>
+          <div class="qa"><h3>6. What is calibration?</h3><p>Calibration estimates the value ranges and quantization parameters, often by passing representative data through the model and collecting activation statistics.</p></div>
+          <div class="qa"><h3>7. What is PTQ?</h3><p>Post-Training Quantization converts a model after its original training is complete. Static PTQ often uses representative calibration data to estimate activation ranges.</p></div>
+          <div class="qa"><h3>8. What is QAT?</h3><p>Quantization-Aware Training simulates quantization effects during training or fine-tuning so the model can adapt to rounding and clipping errors before deployment.</p></div>
+          <div class="qa"><h3>9. Is QLoRA the same as QAT?</h3><p>No. QLoRA usually freezes a 4-bit quantized base model and trains low-rank adapter parameters. QAT explicitly simulates quantization effects in the training graph. They solve related memory/accuracy problems but are different methods.</p></div>
+          <div class="qa"><h3>10. Does INT8 always make inference faster?</h3><p>No. It reduces storage and may reduce memory traffic, but speed depends on hardware support, optimized kernels, batch size, sequence length, and workload characteristics.</p></div>
+          <div class="qa"><h3>11. Why can quantization reduce accuracy?</h3><p>Because rounding maps continuous values to discrete levels, and clipping can discard out-of-range values. Poor calibration, outliers, coarse quantization granularity, or very low bit widths can increase the error.</p></div>
+          <div class="qa"><h3>12. What is the difference between FP16 and INT8?</h3><p>FP16 is a 16-bit floating-point format. INT8 is an 8-bit integer format and usually needs a scale and zero-point to represent the model's real-valued tensors. FP16 halves raw storage compared with FP32; INT8 uses one quarter of FP32's raw per-value storage.</p></div>
+          <div class="callout info"><strong>One-minute interview answer</strong>Quantization compresses neural-network weights and sometimes activations by representing them with fewer bits. A scale and zero-point map real values to a limited integer range, and calibration estimates the ranges for that mapping. PTQ applies quantization after training, while QAT simulates quantization during training so the model can adapt. In LLMs, 8-bit and 4-bit weight quantization can reduce VRAM substantially, but the final choice must be evaluated for quality, latency, and real deployment memory. QLoRA is a related low-memory fine-tuning technique, not the same as classical QAT.</div>
+        </section>
+
+        <section id="glossary">
+          <p class="kicker">17 · Quick reference</p>
+          <h2>Glossary</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td>Parameter</td><td>A learned model value, usually a weight or bias.</td></tr>
+                <tr><td>Weight</td><td>A learned coefficient in a neural-network layer.</td></tr>
+                <tr><td>Activation</td><td>An intermediate value produced during a model's forward pass.</td></tr>
+                <tr><td>Precision</td><td>The numerical resolution or representation used for values.</td></tr>
+                <tr><td>FP32</td><td>32-bit floating-point representation.</td></tr>
+                <tr><td>FP16</td><td>16-bit floating-point representation.</td></tr>
+                <tr><td>BF16</td><td>16-bit floating-point representation with an FP32-sized exponent field.</td></tr>
+                <tr><td>INT8 / UINT8</td><td>Signed or unsigned 8-bit integer representation.</td></tr>
+                <tr><td>Scale</td><td>Real-valued step size represented by one integer increment.</td></tr>
+                <tr><td>Zero-point</td><td>Integer code corresponding to the real value zero.</td></tr>
+                <tr><td>Clipping</td><td>Restricting values to the selected quantization interval.</td></tr>
+                <tr><td>Calibration</td><td>Estimating tensor ranges and quantization parameters.</td></tr>
+                <tr><td>PTQ</td><td>Post-Training Quantization.</td></tr>
+                <tr><td>QAT</td><td>Quantization-Aware Training.</td></tr>
+                <tr><td>Fake quantization</td><td>A training-time operation that simulates low-precision rounding and clipping.</td></tr>
+                <tr><td>QLoRA</td><td>Fine-tuning method using a frozen quantized base model plus trainable low-rank adapters.</td></tr>
+                <tr><td>KV cache</td><td>Stored attention keys and values used to speed autoregressive generation.</td></tr>
+                <tr><td>Outlier</td><td>A value unusually far from the main distribution of tensor values.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="references">
+          <p class="kicker">18 · Further reading</p>
+          <h2>References and documentation</h2>
+          <p>The conceptual explanations and implementation patterns above are aligned with the following framework and library documentation. Check the versions you use because APIs and supported backends can evolve.</p>
+          <ul class="source-list">
+            <li><a href="https://pytorch.org/blog/quantization-in-practice/" target="_blank" rel="noopener">PyTorch — Practical Quantization in PyTorch</a>: quantization fundamentals, calibration, affine versus symmetric schemes, granularity, PTQ and QAT.</li>
+            <li><a href="https://docs.pytorch.org/docs/main/quantization-support.html" target="_blank" rel="noopener">PyTorch — Quantization API Reference</a>: quantized data types and mapping equations.</li>
+            <li><a href="https://huggingface.co/docs/optimum/concept_guides/quantization" target="_blank" rel="noopener">Hugging Face Optimum — Quantization Guide</a>: scale, zero-point, signed symmetric quantization, calibration, dynamic/static PTQ, and QAT.</li>
+            <li><a href="https://huggingface.co/docs/bitsandbytes/main/en/index" target="_blank" rel="noopener">Hugging Face — bitsandbytes documentation</a>: LLM.int8, 4-bit quantization, and QLoRA-related functionality.</li>
+          </ul>
+          <div class="callout tip"><strong>How to use these notes</strong>Read sections 3–8 for the mathematical intuition, sections 10–12 to understand the training and LLM workflows, then execute the examples in section 13 and complete the action plan.</div>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <footer>
+    <div class="footer-inner">Study notes based on the supplied lecture transcript, expanded with worked examples and technical clarifications. All diagrams are inline SVG and all styling is embedded, so this is a self-contained HTML page.</div>
+  </footer>
+</body>
+</html>

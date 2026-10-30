@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A practical, step-by-step guide to fine-tuning Llama 2 7B Chat on a custom instruction dataset using PEFT, LoRA, 4-bit NF4 quantization, and supervised fine-tuning.">
+<title>Fine-Tuning Llama 2 with a Custom Dataset — Practical Guide</title>
+<style>
+:root{--bg:#f5f7fb;--paper:#fff;--ink:#1c2638;--muted:#5d6b82;--line:#dce3ee;--brand:#3159a8;--brand2:#eaf0ff;--teal:#087f78;--tealbg:#e7f7f5;--amber:#97600a;--amberbg:#fff5df;--red:#a13d3d;--redbg:#fff0ef;--code:#101827;--codeink:#e4edf9;--shadow:0 12px 36px rgba(25,43,77,.07);--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:26px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.72 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}.hero{background:linear-gradient(130deg,#17294b,#274d88 64%,#397c91);color:#fff;padding:58px 24px 50px}.hero-inner{max-width:1180px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.76rem;font-weight:800;color:#c8dafb}.hero h1{font-size:clamp(2.1rem,4.6vw,3.75rem);line-height:1.08;max-width:880px;margin:14px 0 18px;letter-spacing:-.04em}.hero p{max-width:820px;color:#e0eaff;font-size:1.08rem;margin:0}.chips{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{border:1px solid #ffffff45;background:#ffffff14;padding:6px 11px;border-radius:999px;font-size:.82rem;color:#eff5ff}.layout{max-width:1320px;margin:30px auto;padding:0 22px;display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;align-items:start}.toc{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;box-shadow:var(--shadow)}.toc h2{font-size:.9rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px;color:var(--muted)}.toc ol{margin:0;padding-left:20px}.toc li{padding:3px 0;color:var(--muted);font-size:.88rem}.toc a{color:#34445e}.content{min-width:0}.intro,.section{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(22px,3.3vw,38px);box-shadow:var(--shadow);margin-bottom:22px}.section h2{font-size:clamp(1.45rem,2.3vw,2rem);letter-spacing:-.025em;line-height:1.2;margin:0 0 16px}.section h3{font-size:1.16rem;margin:28px 0 8px;line-height:1.35}.section h4{font-size:1rem;margin:20px 0 6px}.section p{margin:9px 0 14px}.muted{color:var(--muted)}.small{font-size:.89rem}.lead{font-size:1.08rem;color:#43516a}.kicker{font-size:.76rem;text-transform:uppercase;letter-spacing:.13em;font-weight:800;color:var(--teal);margin-bottom:7px}.callout{padding:15px 17px;border-radius:13px;margin:18px 0;border-left:4px solid var(--brand);background:var(--brand2)}.callout strong{display:block;margin-bottom:3px}.callout.note{border-color:var(--teal);background:var(--tealbg)}.callout.warn{border-color:#d69a2d;background:var(--amberbg)}.callout.danger{border-color:#cf6262;background:var(--redbg)}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.mini{border:1px solid var(--line);border-radius:14px;padding:17px;background:#fbfcff}.mini h3,.mini h4{margin:0 0 7px}.mini p{font-size:.93rem;margin:0;color:var(--muted)}.diagram{margin:20px 0;padding:14px;border:1px solid var(--line);border-radius:15px;background:#fbfcff;overflow:hidden}.diagram svg{width:100%;height:auto;display:block}.diagram figcaption{font-size:.84rem;color:var(--muted);margin:8px 5px 0}.table-wrap{overflow-x:auto;margin:16px 0}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f0f4fa;color:#35435b;font-weight:750}tr:last-child td{border-bottom:0}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:#edf1f7;padding:.12em .35em;border-radius:5px}.codebox{position:relative;margin:16px 0 20px;background:var(--code);color:var(--codeink);border-radius:14px;overflow:hidden;border:1px solid #27364a}.codehead{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;background:#1b293d;color:#c6d4e6;font-size:.8rem}.codehead button{border:1px solid #52627a;background:#263850;color:white;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem}.codebox pre{margin:0;padding:17px;overflow:auto;line-height:1.55;tab-size:4}.codebox code{background:none;padding:0;color:inherit;font-size:.86rem;white-space:pre}.inline-code{background:#edf1f7;border-radius:8px;padding:12px 14px;overflow:auto}.step{display:flex;gap:13px;margin:17px 0;align-items:flex-start}.num{flex:0 0 31px;height:31px;border-radius:50%;background:var(--brand2);color:var(--brand);font-weight:850;display:grid;place-items:center}.step p{margin:0}.formula{background:#f3f6fb;border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center;font:1.12rem/1.7 ui-monospace,monospace;overflow-x:auto;margin:14px 0}.metric{font-size:1.8rem;font-weight:850;letter-spacing:-.04em;color:var(--brand)}.badge{display:inline-block;border-radius:999px;font-size:.76rem;font-weight:800;padding:4px 9px;background:#edf2fc;color:#34518b}.checklist{list-style:none;padding:0}.checklist li{padding:7px 0 7px 28px;position:relative}.checklist li:before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:900}.footer{max-width:1320px;margin:0 auto 44px;padding:0 22px;color:var(--muted);font-size:.88rem}.ref-list li{margin:8px 0;overflow-wrap:anywhere}.toplink{display:inline-block;margin-top:12px;font-size:.85rem}.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.pill{border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.8rem;color:#44536a;background:#fbfcff}
+@media(max-width:950px){.layout{grid-template-columns:1fr}.toc{position:relative;top:auto;max-height:none}.toc ol{columns:2}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.hero{padding:42px 20px}.layout{padding:0 12px;margin:16px auto}.intro,.section{padding:21px 17px}.grid2,.grid3{grid-template-columns:1fr}.toc ol{columns:1}body{font-size:15px}}
+@media print{body{background:white}.hero{background:#203d70!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.layout{display:block;max-width:none}.toc{position:relative;max-height:none;page-break-after:always}.intro,.section{box-shadow:none;break-inside:avoid}.codebox{break-inside:avoid}.footer{margin-top:20px}}
+</style>
+</head>
+<body>
+<header class="hero" id="top">
+ <div class="hero-inner">
+  <div class="eyebrow">Practical LLM Fine-Tuning · Lesson Notes</div>
+  <h1>Fine-Tuning Llama 2 with a Custom Dataset</h1>
+  <p>A notebook-style walkthrough of supervised fine-tuning with Hugging Face Transformers, PEFT/LoRA, 4-bit NF4 quantization, BitsAndBytes, and TRL’s SFTTrainer — with the workflow, parameters, code, and limitations explained.</p>
+  <div class="chips"><span class="chip">Llama 2 7B Chat</span><span class="chip">PEFT + LoRA</span><span class="chip">QLoRA / 4-bit NF4</span><span class="chip">Guanaco-style instruction data</span><span class="chip">Supervised fine-tuning</span></div>
+ </div>
+</header>
+<div class="layout">
+ <nav class="toc" aria-label="Table of contents">
+  <h2>On this page</h2>
+  <ol>
+   <li><a href="#overview">Lesson overview</a></li>
+   <li><a href="#pipeline">End-to-end workflow</a></li>
+   <li><a href="#concepts">PEFT, LoRA and QLoRA</a></li>
+   <li><a href="#memory">Why memory is a constraint</a></li>
+   <li><a href="#environment">Install the libraries</a></li>
+   <li><a href="#access">Model access and setup</a></li>
+   <li><a href="#dataset">Prepare the dataset</a></li>
+   <li><a href="#template">Llama 2 prompt template</a></li>
+   <li><a href="#quant">Configure 4-bit quantization</a></li>
+   <li><a href="#load">Load the model and tokenizer</a></li>
+   <li><a href="#lora">Configure LoRA adapters</a></li>
+   <li><a href="#trainer">Configure and run SFT</a></li>
+   <li><a href="#results">Read the training results</a></li>
+   <li><a href="#save">Save and reload the adapter</a></li>
+   <li><a href="#inference">Run inference and evaluate</a></li>
+   <li><a href="#pitfalls">Troubleshooting and best practices</a></li>
+   <li><a href="#recap">Interview revision</a></li>
+   <li><a href="#sources">Sources and scope notes</a></li>
+  </ol>
+ </nav>
+ <main class="content">
+  <section class="intro" id="overview">
+   <div class="kicker">01 · Lesson overview</div>
+   <h2>What are we building?</h2>
+   <p class="lead">The lesson demonstrates how to adapt the Llama 2 7B Chat model to a custom instruction dataset without updating every parameter in the base model.</p>
+   <p>The demonstrated approach combines three ideas:</p>
+   <div class="grid3">
+    <div class="mini"><h3>PEFT</h3><p>Parameter-Efficient Fine-Tuning reduces the number of trainable parameters. Most pretrained model weights remain frozen.</p></div>
+    <div class="mini"><h3>LoRA</h3><p>Small trainable low-rank adapter matrices learn task-specific updates in selected model layers.</p></div>
+    <div class="mini"><h3>4-bit loading</h3><p>BitsAndBytes loads the frozen base weights in a compact 4-bit representation to reduce GPU memory use.</p></div>
+   </div>
+   <div class="callout note"><strong>Terminology</strong>The transcript sometimes says “PFT” or “parameter efficient transfer learning.” The standard library and research term is **PEFT — Parameter-Efficient Fine-Tuning**. The example is a QLoRA-style workflow: a quantized base model plus trainable LoRA adapters.</div>
+   <h3>Demo configuration from the lesson</h3>
+   <div class="table-wrap"><table><thead><tr><th>Item</th><th>Value described in the video</th><th>Why it matters</th></tr></thead><tbody>
+    <tr><td>Base model</td><td>Llama 2 7B Chat in Hugging Face Transformers format</td><td>Starting checkpoint being adapted</td></tr>
+    <tr><td>Dataset</td><td>OpenAssistant / Guanaco-style human–assistant examples; a 1,000-record subset</td><td>Provides the supervised demonstrations</td></tr>
+    <tr><td>Fine-tuning method</td><td>PEFT with LoRA adapters; 4-bit quantized base model</td><td>Reduces trainable state and base-weight memory</td></tr>
+    <tr><td>LoRA rank / alpha</td><td><code>r = 64</code>, <code>lora_alpha = 16</code></td><td>Controls adapter capacity and scaling</td></tr>
+    <tr><td>Quantization</td><td>4-bit, NF4; FP16 compute in the example</td><td>Compresses the frozen model weights</td></tr>
+    <tr><td>Training</td><td>Supervised fine-tuning; transcript reports 250 global steps</td><td>Optimizes the adapter on formatted text</td></tr>
+   </tbody></table></div>
+   <div class="callout warn"><strong>Reproducibility note</strong>The transcript does not include the original notebook URL, exact dataset repository ID, complete target-module list, or all training arguments. The code below is therefore a coherent current-style implementation scaffold, not a claim to reproduce the video notebook line for line.</div>
+  </section>
+
+  <section class="section" id="pipeline">
+   <div class="kicker">02 · Architecture</div><h2>End-to-end fine-tuning workflow</h2>
+   <p>The pipeline has four major inputs: a pretrained checkpoint, a tokenizer, a formatted training dataset, and a training configuration. The quantized model is wrapped with LoRA adapters; SFT then updates the adapter parameters.</p>
+   <figure class="diagram">
+    <svg viewBox="0 0 940 340" role="img" aria-label="Flow diagram showing dataset preprocessing, 4-bit Llama model loading, LoRA adapter attachment, supervised fine-tuning and saving an adapter">
+     <defs><marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#60728e" stroke-width="1.4"/></marker></defs>
+     <rect x="20" y="28" width="200" height="76" rx="13" fill="#eaf0ff" stroke="#7894d6"/><text x="120" y="57" text-anchor="middle" font-size="16" font-weight="700" fill="#24457f">Custom dataset</text><text x="120" y="80" text-anchor="middle" font-size="12" fill="#526784">Human / assistant pairs</text>
+     <path d="M220 66 H265" stroke="#60728e" stroke-width="2" marker-end="url(#arr1)"/>
+     <rect x="270" y="28" width="200" height="76" rx="13" fill="#e7f7f5" stroke="#63aaa5"/><text x="370" y="57" text-anchor="middle" font-size="16" font-weight="700" fill="#126b65">Format + tokenize</text><text x="370" y="80" text-anchor="middle" font-size="12" fill="#48716f">Llama 2 chat format</text>
+     <path d="M470 66 H515" stroke="#60728e" stroke-width="2" marker-end="url(#arr1)"/>
+     <rect x="520" y="28" width="200" height="76" rx="13" fill="#fff5df" stroke="#d8aa54"/><text x="620" y="57" text-anchor="middle" font-size="16" font-weight="700" fill="#865a14">SFT trainer</text><text x="620" y="80" text-anchor="middle" font-size="12" fill="#806b4c">Loss + optimizer updates</text>
+     <path d="M720 66 H765" stroke="#60728e" stroke-width="2" marker-end="url(#arr1)"/>
+     <rect x="770" y="28" width="150" height="76" rx="13" fill="#edf7eb" stroke="#81b17b"/><text x="845" y="57" text-anchor="middle" font-size="16" font-weight="700" fill="#366b31">Adapter</text><text x="845" y="80" text-anchor="middle" font-size="12" fill="#587c54">Save + deploy</text>
+     <rect x="175" y="190" width="255" height="95" rx="13" fill="#f2efff" stroke="#9d8bd5"/><text x="302" y="220" text-anchor="middle" font-size="16" font-weight="700" fill="#51408c">Frozen base model</text><text x="302" y="244" text-anchor="middle" font-size="12" fill="#635d7c">Llama 2 7B loaded in 4-bit NF4</text><text x="302" y="265" text-anchor="middle" font-size="12" fill="#635d7c">Weights are not optimizer-updated</text>
+     <rect x="510" y="190" width="255" height="95" rx="13" fill="#e7f7f5" stroke="#63aaa5"/><text x="637" y="220" text-anchor="middle" font-size="16" font-weight="700" fill="#126b65">Trainable LoRA adapters</text><text x="637" y="244" text-anchor="middle" font-size="12" fill="#48716f">Low-rank matrices in target layers</text><text x="637" y="265" text-anchor="middle" font-size="12" fill="#48716f">Only adapter parameters receive updates</text>
+     <path d="M430 237 H505" stroke="#60728e" stroke-width="2" marker-end="url(#arr1)"/><text x="468" y="224" font-size="11" fill="#65738b" text-anchor="middle">wrap</text>
+     <path d="M637 190 V145 H620 V110" stroke="#60728e" stroke-width="2" marker-end="url(#arr1)"/><text x="652" y="160" font-size="11" fill="#65738b">train</text>
+    </svg>
+    <figcaption>Conceptual flow: the base model remains frozen while the smaller LoRA adapter is optimized from the prepared instruction examples.</figcaption>
+   </figure>
+   <ol>
+    <li>Install the required Python libraries and authenticate to the model hub.</li>
+    <li>Load and inspect a human–assistant instruction dataset.</li>
+    <li>Convert every example into the prompt format expected by Llama 2 Chat.</li>
+    <li>Configure and load the base model using 4-bit NF4 quantization.</li>
+    <li>Attach LoRA adapters using PEFT.</li>
+    <li>Run supervised fine-tuning (SFT), inspect the loss, and save the adapter.</li>
+    <li>Reload the base model and adapter together, then test unseen prompts.</li>
+   </ol>
+  </section>
+
+  <section class="section" id="concepts">
+   <div class="kicker">03 · Core concepts</div><h2>PEFT, LoRA and QLoRA: how they fit together</h2>
+   <h3>Full fine-tuning vs. parameter-efficient fine-tuning</h3>
+   <p>In full fine-tuning, gradients update the model’s original trainable weights. For a multi-billion-parameter model this creates substantial memory requirements: model weights, gradients, optimizer states, and activations all consume memory.</p>
+   <p>In PEFT, most base-model parameters are frozen and a comparatively small set of additional parameters is trained. LoRA is one PEFT method: it represents the task-specific weight update with low-rank matrices.</p>
+   <div class="grid2">
+    <div class="mini"><h3>Full fine-tuning</h3><p>Update the original model parameters. Flexible, but generally much more expensive in memory and compute.</p><div class="pillrow"><span class="pill">Many trainable parameters</span><span class="pill">Large optimizer state</span></div></div>
+    <div class="mini"><h3>LoRA / PEFT</h3><p>Freeze the base weights and train compact adapter parameters in selected layers.</p><div class="pillrow"><span class="pill">Fewer trainable parameters</span><span class="pill">Small adapter checkpoint</span></div></div>
+   </div>
+   <h3>What makes this QLoRA?</h3>
+   <p>QLoRA combines a quantized base model with LoRA adapters. In this lesson, the base model is loaded in 4-bit NF4, while adapter parameters are trained using a higher-precision compute path such as FP16 or BF16.</p>
+   <figure class="diagram"><svg viewBox="0 0 760 210" role="img" aria-label="QLoRA structure: 4-bit frozen base model plus trainable LoRA adapter, used together for forward computation">
+    <rect x="28" y="42" width="280" height="112" rx="15" fill="#fff5df" stroke="#d4a64f"/><text x="168" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#865a14">Base model</text><text x="168" y="103" text-anchor="middle" font-size="15" fill="#765e36">4-bit NF4</text><text x="168" y="128" text-anchor="middle" font-size="12" fill="#765e36">Frozen weights</text>
+    <text x="380" y="105" text-anchor="middle" font-size="28" fill="#74839b">+</text>
+    <rect x="452" y="42" width="280" height="112" rx="15" fill="#e7f7f5" stroke="#63aaa5"/><text x="592" y="76" text-anchor="middle" font-size="18" font-weight="700" fill="#126b65">LoRA adapter</text><text x="592" y="103" text-anchor="middle" font-size="15" fill="#48716f">Trainable matrices</text><text x="592" y="128" text-anchor="middle" font-size="12" fill="#48716f">Higher precision compute</text>
+    <path d="M168 154 V184 H380" fill="none" stroke="#77869c" stroke-width="2"/><path d="M592 154 V184 H380" fill="none" stroke="#77869c" stroke-width="2"/><path d="M380 184 V198" stroke="#77869c" stroke-width="2"/><text x="380" y="24" text-anchor="middle" font-size="12" fill="#64748b">QLoRA training setup</text>
+   </svg><figcaption>QLoRA does not mean the adapters are also stored as 4-bit trainable weights. The 4-bit representation primarily applies to the frozen base model.</figcaption></figure>
+   <div class="callout warn"><strong>Do not conflate the techniques</strong>Quantization compresses numerical representations. LoRA adds low-rank trainable updates. PEFT is the broader family of parameter-efficient methods. QLoRA combines 4-bit base-model quantization with LoRA training.</div>
+  </section>
+
+  <section class="section" id="memory">
+   <div class="kicker">04 · Hardware</div><h2>Why is GPU memory a constraint?</h2>
+   <p>A 7-billion-parameter model requires substantial storage even before training begins. A rough lower-bound estimate is parameter count multiplied by bytes per stored parameter.</p>
+   <div class="table-wrap"><table><thead><tr><th>Weight representation</th><th>Bytes per parameter (approx.)</th><th>7B weights only (approx.)</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>FP32</td><td>4</td><td>28 GB</td><td>High precision; large storage footprint</td></tr>
+    <tr><td>FP16 / BF16</td><td>2</td><td>14 GB</td><td>Common reduced-precision model storage</td></tr>
+    <tr><td>INT8</td><td>1</td><td>7 GB</td><td>Quantized representation; metadata/overhead excluded</td></tr>
+    <tr><td>4-bit</td><td>0.5</td><td>3.5 GB</td><td>Theoretical raw weight estimate; practical footprint is larger</td></tr>
+   </tbody></table></div>
+   <p class="small muted">These are decimal, weight-only estimates. Actual GPU usage also depends on quantization metadata, non-quantized modules, temporary buffers, activations, sequence length, batch size, CUDA context, and framework implementation.</p>
+   <h3>What else consumes memory during training?</h3>
+   <div class="grid2">
+    <div class="mini"><h4>Model parameters</h4><p>The loaded base model and the trainable adapter weights.</p></div>
+    <div class="mini"><h4>Gradients</h4><p>Gradient tensors for parameters being trained.</p></div>
+    <div class="mini"><h4>Optimizer states</h4><p>Extra state used by Adam-family optimizers to update trainable parameters.</p></div>
+    <div class="mini"><h4>Activations and workspace</h4><p>Intermediate tensors retained or recomputed during forward/backward passes.</p></div>
+   </div>
+   <div class="callout note"><strong>Why QLoRA helps</strong>The base model’s quantized weights require less memory, and LoRA keeps the trainable parameter set relatively small. This can make fine-tuning feasible on a smaller GPU than full fine-tuning, but it does not guarantee that every 7B training configuration will fit in a 15 GB device.</div>
+  </section>
+
+  <section class="section" id="environment">
+   <div class="kicker">05 · Environment</div><h2>Install the required libraries</h2>
+   <p>The transcript uses Google Colab and installs the core Hugging Face and quantization libraries. A current environment can be prepared with:</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · install</span><button onclick="copyCode(this)">Copy</button></div><pre><code>!pip install -U \
+  transformers datasets accelerate peft bitsandbytes trl huggingface_hub</code></pre></div>
+   <div class="table-wrap"><table><thead><tr><th>Library</th><th>Purpose in this workflow</th></tr></thead><tbody>
+    <tr><td><code>transformers</code></td><td>Loads the pretrained model and tokenizer; supplies <code>BitsAndBytesConfig</code> and training utilities.</td></tr>
+    <tr><td><code>datasets</code></td><td>Loads, selects, splits, maps, and stores the training examples.</td></tr>
+    <tr><td><code>accelerate</code></td><td>Helps configure device placement and distributed / hardware-aware execution.</td></tr>
+    <tr><td><code>peft</code></td><td>Configures and attaches LoRA adapters; prepares a quantized model for k-bit training.</td></tr>
+    <tr><td><code>bitsandbytes</code></td><td>Provides 4-bit / 8-bit quantization support and memory-efficient optimizer options.</td></tr>
+    <tr><td><code>trl</code></td><td>Provides <code>SFTTrainer</code> for supervised fine-tuning.</td></tr>
+    <tr><td><code>huggingface_hub</code></td><td>Authenticates to Hugging Face Hub and accesses gated model repositories.</td></tr>
+   </tbody></table></div>
+   <div class="callout warn"><strong>Restart after installation when needed</strong>In Colab, changing a core library after it has already been imported can leave an old version in the Python process. Restart the runtime if imports or CUDA extension loading behave inconsistently.</div>
+  </section>
+
+  <section class="section" id="access">
+   <div class="kicker">06 · Model access</div><h2>Authenticate and select the base model</h2>
+   <p>The model used in the walkthrough is the Hugging Face Transformers version of Llama 2 7B Chat:</p>
+   <div class="formula">meta-llama/Llama-2-7b-chat-hf</div>
+   <p>This repository is gated. Before downloading weights, the user must review and accept Meta’s license and obtain access on the Hugging Face model page. Then authenticate in the notebook.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · authenticate</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from huggingface_hub import login
+
+# Paste a Hugging Face access token when prompted.
+login()</code></pre></div>
+   <div class="callout danger"><strong>Access is not automatic</strong>Being able to see a model repository does not necessarily mean the account can download its files. Complete the model-gating and license steps first; never hard-code a private access token in a notebook shared with others.</div>
+   <p class="small muted">Model page: <a href="https://huggingface.co/meta-llama/Llama-2-7b-chat-hf" target="_blank" rel="noopener">meta-llama/Llama-2-7b-chat-hf</a>.</p>
+  </section>
+
+  <section class="section" id="dataset">
+   <div class="kicker">07 · Dataset preparation</div><h2>Load and inspect the custom instruction data</h2>
+   <p>The video describes an OpenAssistant / Guanaco-style dataset containing human prompts and assistant responses. It mentions a dataset of roughly 10,000 records and selecting 1,000 examples to keep the demonstration manageable.</p>
+   <h3>Expected logical structure</h3>
+   <div class="codebox"><div class="codehead"><span>Example record · JSON</span><button onclick="copyCode(this)">Copy</button></div><pre><code>{
+  "instruction": "Explain monopsony in economics with an example.",
+  "input": "Keep the explanation concise.",
+  "output": "A monopsony is a market with one dominant buyer..."
+}</code></pre></div>
+   <p>Some datasets instead use columns such as <code>human</code> and <code>assistant</code>, or provide an already formatted text field. Inspect the actual columns before applying a mapping function.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · load a local JSONL dataset</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from datasets import load_dataset
+
+# Each line in train.jsonl should be one JSON record.
+raw = load_dataset("json", data_files="train.jsonl", split="train")
+print(raw.column_names)
+print(raw[0])
+
+# Demonstration subset, following the video's 1,000-example selection.
+raw = raw.select(range(min(1_000, len(raw))))</code></pre></div>
+   <div class="callout note"><strong>Using the exact video dataset</strong>The transcript names the OpenAssistant Guanaco dataset family but does not provide an unambiguous repository ID. The local JSONL example avoids inventing one. To use a Hub dataset, replace the loading line with its verified repository ID and adapt the field names to its real schema.</div>
+   <h3>Split off evaluation examples</h3>
+   <p>The video focuses on training and generation examples. For a more reliable experiment, hold out a validation split so that training loss is not the only signal of quality.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · train / validation split</span><button onclick="copyCode(this)">Copy</button></div><pre><code>split = raw.train_test_split(test_size=0.05, seed=42)
+train_raw = split["train"]
+eval_raw = split["test"]
+print(len(train_raw), len(eval_raw))</code></pre></div>
+   <h3>Data quality checks</h3>
+   <ul class="checklist">
+    <li>Remove empty prompts and empty assistant responses.</li>
+    <li>Deduplicate repeated instruction–response pairs.</li>
+    <li>Check for malformed text, broken encodings, and unwanted HTML or markup.</li>
+    <li>Remove private, sensitive, or unauthorized data before training.</li>
+    <li>Keep a held-out split separate from training.</li>
+    <li>Inspect long examples because truncation can remove the answer tail.</li>
+   </ul>
+  </section>
+
+  <section class="section" id="template">
+   <div class="kicker">08 · Prompt formatting</div><h2>Convert examples to the Llama 2 Chat format</h2>
+   <p>Llama 2 Chat expects structured instruction boundaries. The transcript shows the following pattern:</p>
+   <div class="codebox"><div class="codehead"><span>Llama 2 Chat serialization pattern</span><button onclick="copyCode(this)">Copy</button></div><pre><code>&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;
+You are a helpful, accurate assistant.
+&lt;&lt;/SYS&gt;&gt;
+
+User instruction goes here.
+[/INST] Assistant response goes here.&lt;/s&gt;</code></pre></div>
+   <div class="table-wrap"><table><thead><tr><th>Token / marker</th><th>Role in the example</th></tr></thead><tbody>
+    <tr><td><code>&lt;s&gt;</code></td><td>Beginning-of-sequence marker</td></tr>
+    <tr><td><code>[INST]</code></td><td>Starts the user instruction block</td></tr>
+    <tr><td><code>&lt;&lt;SYS&gt;&gt; ... &lt;&lt;/SYS&gt;&gt;</code></td><td>Wraps the system instruction</td></tr>
+    <tr><td><code>[/INST]</code></td><td>Marks the end of the user instruction and start of the assistant answer</td></tr>
+    <tr><td><code>&lt;/s&gt;</code></td><td>End-of-sequence marker for the serialized example</td></tr>
+   </tbody></table></div>
+   <h3>Formatting function</h3>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · convert instruction / answer rows</span><button onclick="copyCode(this)">Copy</button></div><pre><code>SYSTEM_PROMPT = "You are a helpful, accurate assistant."
+
+def format_llama2(example):
+    instruction = (example.get("instruction") or example.get("human") or "").strip()
+    extra_input = (example.get("input") or "").strip()
+    answer = (example.get("output") or example.get("assistant") or "").strip()
+
+    if extra_input:
+        instruction = f"{instruction}\n\nAdditional context:\n{extra_input}"
+
+    text = (
+        "&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;\n"
+        f"{SYSTEM_PROMPT}\n"
+        "&lt;&lt;/SYS&gt;&gt;\n\n"
+        f"{instruction} [/INST] {answer}&lt;/s&gt;"
+    )
+    return {"text": text}
+
+train_dataset = train_raw.map(format_llama2)
+eval_dataset = eval_raw.map(format_llama2)
+
+print(train_dataset[0]["text"])</code></pre></div>
+   <div class="callout warn"><strong>Important: this code assumes field names</strong>It handles the example schemas <code>instruction/input/output</code> and <code>human/assistant</code>. If the selected dataset has a single <code>text</code> column or a different conversation structure, write a formatter for that schema instead of applying this function unchanged.</div>
+   <div class="callout note"><strong>Which tokens contribute to the loss?</strong>With this plain-text <code>text</code> dataset, standard causal-language-model SFT generally computes loss over the serialized sequence, including prompt tokens as well as answer tokens (subject to padding and trainer behavior). If the goal is to train only on assistant completions, use a prompt–completion or conversational dataset format and configure completion-only / assistant-only loss with a chat template that supports it. Do not assume the trainer masks the prompt automatically for a plain text column.</div>
+   <p>Keep the same serialization convention during training and inference. If a model tokenizer provides an official chat template, prefer the tokenizer’s template rather than manually constructing a different format. Chat templates are model-specific.</p>
+  </section>
+
+  <section class="section" id="quant">
+   <div class="kicker">09 · Quantization</div><h2>Configure 4-bit NF4 quantization</h2>
+   <p>The lesson loads the base model in 4-bit mode using BitsAndBytes. The example selects NF4 as the 4-bit quantization type and uses FP16 for computation. It also discusses nested (double) quantization as an optional memory optimization.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · BitsAndBytesConfig</span><button onclick="copyCode(this)">Copy</button></div><pre><code>import torch
+from transformers import BitsAndBytesConfig
+
+# Use BF16 only when the GPU supports it; otherwise use FP16.
+if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+    compute_dtype = torch.bfloat16
+else:
+    compute_dtype = torch.float16
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=compute_dtype,
+    bnb_4bit_use_double_quant=True,
+)</code></pre></div>
+   <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Meaning</th><th>Example setting</th></tr></thead><tbody>
+    <tr><td><code>load_in_4bit</code></td><td>Load supported base-model linear weights in 4-bit form.</td><td><code>True</code></td></tr>
+    <tr><td><code>bnb_4bit_quant_type</code></td><td>4-bit quantization format.</td><td><code>"nf4"</code></td></tr>
+    <tr><td><code>bnb_4bit_compute_dtype</code></td><td>Datatype used for compute operations with quantized weights.</td><td>FP16 or BF16</td></tr>
+    <tr><td><code>bnb_4bit_use_double_quant</code></td><td>Applies a second quantization to quantization constants to save additional memory.</td><td><code>True</code> in this updated example</td></tr>
+   </tbody></table></div>
+   <div class="callout note"><strong>Storage precision is not compute precision</strong>4-bit describes how the frozen base weights are represented in memory. The computation is performed using the configured higher-precision compute datatype. Do not describe this as converting every tensor and every operation into ordinary INT4 arithmetic.</div>
+  </section>
+
+  <section class="section" id="load">
+   <div class="kicker">10 · Load model and tokenizer</div><h2>Load the quantized Llama 2 checkpoint</h2>
+   <p>Transformers provides <code>AutoModelForCausalLM</code> for causal language models and <code>AutoTokenizer</code> for converting text to token IDs.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · model and tokenizer</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from transformers import AutoModelForCausalLM, AutoTokenizer
+
+MODEL_ID = "meta-llama/Llama-2-7b-chat-hf"
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=bnb_config,
+    device_map="auto",
+    dtype=compute_dtype,
+)
+
+model.config.use_cache = False  # commonly disabled during gradient-checkpointed training
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, use_fast=True)
+
+# Llama 2 tokenizers may not define a distinct padding token.
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+
+tokenizer.padding_side = "right"</code></pre></div>
+   <p><strong>Why set the padding token?</strong> Batches often contain sequences of different lengths. Padding makes their tensor dimensions consistent. Reusing the EOS token as padding is a common causal-LM setup when a dedicated pad token is absent; the data collator and label masking must still handle padding correctly.</p>
+   <p><strong>Why disable <code>use_cache</code> during training?</strong> The generation key/value cache is useful for autoregressive inference, but typically unnecessary during training and can conflict with gradient checkpointing. Re-enable caching for inference if appropriate.</p>
+  </section>
+
+  <section class="section" id="lora">
+   <div class="kicker">11 · Adapter configuration</div><h2>Attach LoRA adapters with PEFT</h2>
+   <p>LoRA is applied to selected linear projections inside the Transformer. Instead of updating the original matrix directly, the method learns a low-rank update. The rank, scaling coefficient, dropout, and target modules control the adapter configuration.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · LoRA configuration</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from peft import LoraConfig, prepare_model_for_kbit_training
+
+# Prepare the quantized checkpoint for adapter training.
+model = prepare_model_for_kbit_training(model)
+
+lora_config = LoraConfig(
+    r=64,                         # rank used in the video
+    lora_alpha=16,                # scaling coefficient used in the video
+    lora_dropout=0.05,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    bias="none",
+    task_type="CAUSAL_LM",
+)</code></pre></div>
+   <div class="table-wrap"><table><thead><tr><th>LoRA parameter</th><th>What it controls</th><th>Practical note</th></tr></thead><tbody>
+    <tr><td><code>r</code></td><td>Rank of the low-rank update matrices.</td><td>Higher rank increases adapter capacity and trainable parameter count.</td></tr>
+    <tr><td><code>lora_alpha</code></td><td>Scaling applied to the adapter update.</td><td>Interpret together with rank; the conventional LoRA scaling is alpha divided by rank.</td></tr>
+    <tr><td><code>target_modules</code></td><td>Model layers that receive LoRA modules.</td><td>Names must match the architecture. The example targets Llama attention projections.</td></tr>
+    <tr><td><code>lora_dropout</code></td><td>Dropout applied on the adapter path during training.</td><td>May help regularize small datasets.</td></tr>
+    <tr><td><code>bias</code></td><td>Whether selected bias parameters are trained.</td><td><code>none</code> is a common adapter setup.</td></tr>
+    <tr><td><code>task_type</code></td><td>Declares the model task to PEFT.</td><td><code>CAUSAL_LM</code> for autoregressive language modeling.</td></tr>
+   </tbody></table></div>
+   <div class="callout warn"><strong>Target modules are architecture-dependent</strong>The transcript mentions target modules but does not spell out the exact list. The list above is a common Llama attention-projection example, not a verified copy of the video’s notebook. Always inspect the model’s module names and choose targets deliberately.</div>
+   <p>For a quick parameter-count check after wrapping the model in PEFT, use <code>model.print_trainable_parameters()</code>. With a Trainer-based workflow, PEFT is typically attached through the trainer’s <code>peft_config</code> argument.</p>
+  </section>
+
+  <section class="section" id="trainer">
+   <div class="kicker">12 · Supervised fine-tuning</div><h2>Configure the trainer and start training</h2>
+   <p>The lesson uses TRL’s <code>SFTTrainer</code> and supervised fine-tuning. Training arguments control batch size, gradient accumulation, learning rate, optimizer, scheduler, sequence length, logging, checkpoints, and precision.</p>
+   <h3>Example training configuration</h3>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · SFTConfig and SFTTrainer</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from trl import SFTConfig, SFTTrainer
+
+OUTPUT_DIR = "./llama2-7b-chat-custom-adapter"
+
+training_args = SFTConfig(
+    output_dir=OUTPUT_DIR,
+    num_train_epochs=1,
+    max_steps=250,                  # matches the step count reported in the demo
+    per_device_train_batch_size=1,
+    per_device_eval_batch_size=1,
+    gradient_accumulation_steps=4,
+    learning_rate=2e-4,
+    weight_decay=0.001,
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.03,
+    optim="paged_adamw_8bit",
+    logging_steps=25,
+    save_steps=50,
+    save_total_limit=2,
+    max_length=1024,
+    dataset_text_field="text",
+    packing=False,
+    gradient_checkpointing=True,
+    fp16=(compute_dtype == torch.float16),
+    bf16=(compute_dtype == torch.bfloat16),
+    report_to="none",
+)
+
+trainer = SFTTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=eval_dataset,
+    processing_class=tokenizer,
+    peft_config=lora_config,
+)
+
+trainer.train()</code></pre></div>
+   <div class="callout warn"><strong>max_steps overrides epochs</strong>In the Transformers Trainer training loop, a positive <code>max_steps</code> determines the total number of update steps and takes precedence over the epoch-derived step count. The example includes both to make the intent visible, but the actual run is bounded by 250 steps.</div>
+   <h3>Key training parameters</h3>
+   <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Explanation</th></tr></thead><tbody>
+    <tr><td>Per-device batch size</td><td>Number of examples processed per device in one micro-batch.</td></tr>
+    <tr><td>Gradient accumulation</td><td>Accumulates gradients across multiple micro-batches before an optimizer update. Approximate effective batch size = micro-batch × accumulation × number of devices.</td></tr>
+    <tr><td>Learning rate</td><td>Controls the size of adapter parameter updates.</td></tr>
+    <tr><td>Cosine scheduler</td><td>Adjusts learning rate over the run following a cosine-shaped schedule.</td></tr>
+    <tr><td>Paged AdamW 8-bit</td><td>Memory-conscious optimizer variant supported by BitsAndBytes setups.</td></tr>
+    <tr><td>Max sequence length</td><td>Caps the tokenized sample length. Long samples may be truncated.</td></tr>
+    <tr><td>Gradient checkpointing</td><td>Reduces activation memory by recomputing selected activations during backward propagation, at added compute cost.</td></tr>
+    <tr><td>Logging / save steps</td><td>Controls how often metrics are logged and checkpoints are written.</td></tr>
+   </tbody></table></div>
+   <h3>Understand the effective batch size</h3>
+   <div class="formula">Effective batch size ≈ 1 × 4 × 1 GPU = 4 examples per optimizer update</div>
+   <p>This is an approximation; the final partial batch and distributed training can change the exact count.</p>
+   <div class="callout note"><strong>Sequence length is a memory lever</strong>Reducing <code>max_length</code> is often an effective way to lower activation memory. Choose a length that still preserves the complete instruction and answer for the target task.</div>
+  </section>
+
+  <section class="section" id="results">
+   <div class="kicker">13 · Training results</div><h2>Read the loss and run statistics</h2>
+   <p>The transcript reports a completed run with approximately 250 global steps, a training loss around 1.36, and an elapsed time of roughly 25 minutes in the demonstrated Colab environment. It also notes that hardware and runtime tier affect duration.</p>
+   <div class="grid3">
+    <div class="mini"><div class="metric">250</div><p>Global steps reported in the demo</p></div>
+    <div class="mini"><div class="metric">~1.36</div><p>Training loss reported near completion</p></div>
+    <div class="mini"><div class="metric">~25 min</div><p>Runtime described for that particular run</p></div>
+   </div>
+   <div class="callout warn"><strong>These are demo observations, not performance guarantees</strong>Training duration and loss depend on the actual dataset, sequence length, GPU, library versions, batch configuration, and random seed. A lower training loss does not by itself prove that responses generalize to new prompts.</div>
+   <h3>What should be monitored?</h3>
+   <ul>
+    <li><strong>Training loss:</strong> whether the model is learning the training examples.</li>
+    <li><strong>Validation loss:</strong> whether performance on held-out examples improves or degrades.</li>
+    <li><strong>GPU memory:</strong> whether the run is near the device limit.</li>
+    <li><strong>Throughput:</strong> examples or tokens processed per second.</li>
+    <li><strong>Generated samples:</strong> whether answers follow the expected format and remain useful.</li>
+   </ul>
+  </section>
+
+  <section class="section" id="save">
+   <div class="kicker">14 · Persistence</div><h2>Save the trained adapter</h2>
+   <p>With PEFT/LoRA, the fine-tuned artifact is commonly an adapter checkpoint rather than a complete copy of all original base-model weights. Keep the base model identifier alongside the adapter so the artifact can be loaded correctly later.</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · save</span><button onclick="copyCode(this)">Copy</button></div><pre><code>trainer.save_model(OUTPUT_DIR)
+tokenizer.save_pretrained(OUTPUT_DIR)
+
+print("Saved adapter and tokenizer to:", OUTPUT_DIR)</code></pre></div>
+   <figure class="diagram"><svg viewBox="0 0 760 190" role="img" aria-label="Two saved artifacts, base model and LoRA adapter, are loaded together for inference">
+    <rect x="25" y="40" width="280" height="95" rx="14" fill="#fff5df" stroke="#d4a64f"/><text x="165" y="73" text-anchor="middle" font-size="17" font-weight="700" fill="#865a14">Base checkpoint</text><text x="165" y="99" text-anchor="middle" font-size="12" fill="#765e36">Model ID / quantized load config</text>
+    <rect x="455" y="40" width="280" height="95" rx="14" fill="#e7f7f5" stroke="#63aaa5"/><text x="595" y="73" text-anchor="middle" font-size="17" font-weight="700" fill="#126b65">LoRA adapter folder</text><text x="595" y="99" text-anchor="middle" font-size="12" fill="#48716f">Adapter weights + adapter config</text>
+    <path d="M305 88 H450" stroke="#60728e" stroke-width="2.3"/><path d="M370 80 L380 88 L370 96" fill="none" stroke="#60728e" stroke-width="2"/><path d="M385 80 L395 88 L385 96" fill="none" stroke="#60728e" stroke-width="2"/><text x="380" y="157" text-anchor="middle" font-size="13" fill="#52637c">Load both together</text>
+   </svg><figcaption>The adapter alone is not a standalone full model. For inference, load the compatible base checkpoint and attach the saved adapter.</figcaption></figure>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · reload adapter</span><button onclick="copyCode(this)">Copy</button></div><pre><code>from peft import AutoPeftModelForCausalLM
+
+inference_model = AutoPeftModelForCausalLM.from_pretrained(
+    OUTPUT_DIR,
+    device_map="auto",
+    dtype=compute_dtype,
+)
+inference_model.eval()</code></pre></div>
+   <p class="small muted">Depending on the library versions and how the model was saved, loading may require explicitly loading the base model and then using <code>PeftModel.from_pretrained(base_model, OUTPUT_DIR)</code>. The adapter configuration records the base-model reference in normal PEFT saves.</p>
+  </section>
+
+  <section class="section" id="inference">
+   <div class="kicker">15 · Test generation</div><h2>Run inference with the fine-tuned model</h2>
+   <p>The video uses a text-generation pipeline to test a general question and then a question drawn from the training examples. A direct generation example makes the prompt and generated tokens explicit:</p>
+   <div class="codebox"><div class="codehead"><span>Notebook cell · generate a response</span><button onclick="copyCode(this)">Copy</button></div><pre><code>prompt = (
+    "&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;\n"
+    "You are a helpful, accurate assistant.\n"
+    "&lt;&lt;/SYS&gt;&gt;\n\n"
+    "What is a large language model? [/INST]"
+)
+
+inputs = tokenizer(prompt, return_tensors="pt").to(inference_model.device)
+
+with torch.no_grad():
+    output_ids = inference_model.generate(
+        **inputs,
+        max_new_tokens=180,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+        pad_token_id=tokenizer.eos_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+    )
+
+new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
+print(tokenizer.decode(new_tokens, skip_special_tokens=True))</code></pre></div>
+   <h3>How should the model be evaluated?</h3>
+   <p>Do not judge fine-tuning from one example. Build a small, fixed evaluation set that includes prompts not used in training. Evaluate answer relevance, factuality, completeness, formatting, refusal behavior where relevant, and regressions on general capabilities.</p>
+   <div class="callout note"><strong>Compare against the base model</strong>Run the same prompts through the original Llama 2 Chat checkpoint and the fine-tuned adapter model. The comparison helps determine whether the fine-tuning actually improved the target task or merely changed the response style.</div>
+  </section>
+
+  <section class="section" id="pitfalls">
+   <div class="kicker">16 · Practical checklist</div><h2>Troubleshooting and best practices</h2>
+   <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>What to check</th></tr></thead><tbody>
+    <tr><td>Access denied while loading model</td><td>Gated repository access or missing authentication</td><td>Accept the model license, request access where required, and authenticate the runtime.</td></tr>
+    <tr><td>CUDA out-of-memory</td><td>Sequence length, micro-batch, activations, or model placement too large</td><td>Lower batch size and sequence length; use gradient accumulation/checkpointing; verify 4-bit loading and device map.</td></tr>
+    <tr><td>BitsAndBytes import / CUDA error</td><td>Incompatible platform, CUDA runtime, or binary package</td><td>Check current BitsAndBytes hardware compatibility and restart after installation.</td></tr>
+    <tr><td>Model output ignores instruction</td><td>Incorrect prompt formatting or dataset mapping</td><td>Inspect rendered training strings and use the model’s expected chat format consistently.</td></tr>
+    <tr><td>Loss decreases but answers are poor</td><td>Dataset quality, overfitting, poor evaluation, or incorrect masking</td><td>Inspect examples, validation loss, unseen prompts, and which tokens contribute to loss.</td></tr>
+    <tr><td>Padding / tensor shape errors</td><td>Missing pad token or inconsistent preprocessing</td><td>Set a valid pad token, use a compatible collator, and inspect tokenized examples.</td></tr>
+    <tr><td>Only adapter files are saved</td><td>Normal PEFT adapter checkpoint behavior</td><td>Retain the base-model ID and load the adapter on top of the base checkpoint.</td></tr>
+   </tbody></table></div>
+   <h3>Before launching a full run</h3>
+   <ul class="checklist">
+    <li>Print the dataset columns and inspect at least five formatted examples.</li>
+    <li>Tokenize a few examples and verify that the answer is not truncated.</li>
+    <li>Check GPU type, total memory, CUDA availability, and BF16 support.</li>
+    <li>Run a short smoke test with a small subset and a few optimizer steps.</li>
+    <li>Record the base model ID, dataset version, random seed, package versions, and configuration.</li>
+    <li>Keep a validation set and compare generations against the original model.</li>
+    <li>Save adapter checkpoints and training logs outside the temporary runtime.</li>
+   </ul>
+   <div class="callout danger"><strong>Safety and data governance</strong>Only train on data you are authorized to use. Remove personal or confidential information where it is not needed, review the base model license and acceptable-use requirements, and evaluate the fine-tuned model for harmful or unreliable behavior before deployment.</div>
+  </section>
+
+  <section class="section" id="recap">
+   <div class="kicker">17 · Revision</div><h2>Interview-ready summary</h2>
+   <h3>Explain the complete workflow in one minute</h3>
+   <p>“I start with a pretrained Llama 2 7B Chat checkpoint and a human–assistant instruction dataset. I inspect and clean the data, then serialize each example in the Llama 2 Chat instruction format. To fit the model into limited GPU memory, I load the frozen base weights using 4-bit NF4 quantization through BitsAndBytes. I prepare the quantized model for k-bit training, attach LoRA adapters to selected attention projections using PEFT, and train those adapter parameters with TRL’s SFTTrainer. Finally, I save the adapter, reload it with the same base checkpoint, and compare its responses against the base model on held-out prompts.”</p>
+   <h3>Frequently asked questions</h3>
+   <div class="mini"><h4>1. What is PEFT?</h4><p>A family of fine-tuning methods that reduces the number of parameters that must be trained or stored. LoRA is one method in this family.</p></div>
+   <div class="mini"><h4>2. What is LoRA?</h4><p>Low-Rank Adaptation learns a compact low-rank update to selected weight matrices while the original pretrained weights are typically frozen.</p></div>
+   <div class="mini"><h4>3. What is QLoRA?</h4><p>A technique that quantizes the pretrained base model, commonly to 4-bit NF4, and trains LoRA adapters on top of it.</p></div>
+   <div class="mini"><h4>4. Why use NF4?</h4><p>NF4 is a 4-bit datatype designed for normally distributed weights and is commonly recommended for training 4-bit base models in QLoRA workflows.</p></div>
+   <div class="mini"><h4>5. Why does the tokenizer matter?</h4><p>The tokenizer maps text to token IDs. Chat formatting and special-token boundaries must match the format expected by the model.</p></div>
+   <div class="mini"><h4>6. What does SFT mean?</h4><p>Supervised Fine-Tuning trains the model on examples of desired inputs and outputs, using a supervised next-token prediction objective.</p></div>
+   <div class="mini"><h4>7. Why save an adapter rather than the full model?</h4><p>Only the trainable adapter weights need to be saved for a PEFT run; the original base checkpoint can be reused when loading the adapter.</p></div>
+   <div class="mini"><h4>8. Does a training loss of 1.36 prove the model is good?</h4><p>No. Training loss is only one signal. Held-out validation and task-specific generation evaluation are necessary.</p></div>
+   <h3>Quick revision checklist</h3>
+   <ul class="checklist"><li>PEFT reduces trainable parameters.</li><li>LoRA learns low-rank updates in selected layers.</li><li>QLoRA combines quantized base weights and LoRA adapters.</li><li>NF4 is the 4-bit quantization type used in the walkthrough.</li><li>Dataset records must match the correct Llama 2 chat format.</li><li>SFTTrainer performs supervised fine-tuning.</li><li>Save and reload the adapter with its matching base model.</li><li>Validate on prompts that were not used during training.</li></ul>
+  </section>
+
+  <section class="section" id="sources">
+   <div class="kicker">18 · Source notes</div><h2>Source material, verified documentation, and scope</h2>
+   <h3>Transcript-derived details</h3>
+   <p>The lesson-specific narrative and reported experiment settings are based on the supplied transcript: Llama 2 7B Chat, OpenAssistant/Guanaco-style data, 1,000-example subset, PEFT/LoRA, 4-bit NF4 loading, rank 64, alpha 16, supervised fine-tuning, 250 reported global steps, training loss around 1.36, and an approximately 25-minute Colab run.</p>
+   <h3>Current documentation used to update the code scaffold</h3>
+   <ul class="ref-list">
+    <li><a href="https://huggingface.co/docs/trl/sft_trainer" target="_blank" rel="noopener">TRL — SFTTrainer documentation</a>: current trainer interface, dataset formats, and PEFT integration.</li>
+    <li><a href="https://huggingface.co/docs/peft/main/developer_guides/quantization" target="_blank" rel="noopener">PEFT — Quantization guide</a>: prepare a 4-bit model for k-bit training and configure LoRA for QLoRA.</li>
+    <li><a href="https://huggingface.co/docs/transformers/en/quantization/bitsandbytes" target="_blank" rel="noopener">Transformers — BitsAndBytes quantization</a>: 4-bit loading, NF4, compute datatype, and hardware notes.</li>
+    <li><a href="https://huggingface.co/docs/transformers/en/chat_templating" target="_blank" rel="noopener">Transformers — Chat templates</a>: why prompt serialization is model-specific.</li>
+    <li><a href="https://huggingface.co/docs/peft/main/conceptual_guides/lora" target="_blank" rel="noopener">PEFT — LoRA conceptual guide</a>: rank, target modules, scaling, and adapter setup.</li>
+    <li><a href="https://huggingface.co/meta-llama/Llama-2-7b-chat-hf" target="_blank" rel="noopener">Meta Llama 2 7B Chat model card</a>: checkpoint description and gated model/license notice.</li>
+   </ul>
+   <div class="callout note"><strong>What was intentionally not assumed</strong>The supplied transcript does not contain a complete notebook, exact dataset repository ID, full LoRA target-module list, every optimizer argument, or complete evaluation protocol. Where the notes provide a runnable-style example, placeholders and assumptions are identified rather than presented as verbatim source code.</div>
+   <a class="toplink" href="#top">↑ Back to top</a>
+  </section>
+ </main>
+</div>
+<footer class="footer">Study notes created from the supplied Llama 2 fine-tuning transcript. Code examples are educational scaffolding; verify package versions, hardware support, model access, and dataset schema in your own environment before running a training job.</footer>
+<script>
+function copyCode(button){
+ const code=button.closest('.codebox').querySelector('pre code');
+ const text=code.innerText;
+ if(navigator.clipboard && window.isSecureContext){
+  navigator.clipboard.writeText(text).then(()=>{const old=button.textContent;button.textContent='Copied';setTimeout(()=>button.textContent=old,1200);}).catch(()=>fallbackCopy(text,button));
+ }else{fallbackCopy(text,button);}
+}
+function fallbackCopy(text,button){
+ const area=document.createElement('textarea');area.value=text;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();
+ try{document.execCommand('copy');const old=button.textContent;button.textContent='Copied';setTimeout(()=>button.textContent=old,1200);}catch(e){button.textContent='Select code manually';}
+ area.remove();
+}
+</script>
+</body>
+</html>

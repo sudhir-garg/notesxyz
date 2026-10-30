@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A comprehensive guide to LLM fine-tuning: SFT, LoRA, QLoRA, dataset engineering, compute planning, evaluation, Hugging Face training, and deployment.">
+<title>LLM Fine-Tuning — Complete Merged Study Guide</title>
+<style>
+:root{--bg:#f6f8fc;--paper:#fff;--ink:#172033;--muted:#5d687b;--line:#e2e7f0;--blue:#3159c9;--blue2:#eaf0ff;--teal:#087f8c;--teal2:#e7f7f7;--gold:#9b6500;--gold2:#fff5df;--red:#a33d3d;--red2:#fff0f0;--code:#111827;--codeink:#e8edf7;--shadow:0 12px 32px rgba(26,42,74,.07);--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.72 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.hero{background:radial-gradient(circle at 85% 15%,#3b5ed1 0,transparent 33%),linear-gradient(135deg,#101a36,#1e3265 58%,#0e5964);color:#fff;padding:68px 24px 58px}.hero-inner{max-width:1180px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;font-weight:800;color:#b9cbff}.hero h1{font-size:clamp(2.35rem,5vw,4.5rem);line-height:1.05;letter-spacing:-.045em;max-width:850px;margin:15px 0 18px}.hero p{max-width:780px;color:#e3eaff;font-size:1.13rem;margin:0}.hero-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.hero-meta span{border:1px solid #ffffff42;background:#ffffff13;border-radius:99px;padding:6px 12px;font-size:.82rem;color:#f2f5ff}.layout{max-width:1320px;margin:34px auto;padding:0 22px;display:grid;grid-template-columns:265px minmax(0,1fr);gap:28px}.sidebar{position:sticky;top:18px;align-self:start;max-height:calc(100vh - 36px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}.sidebar h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 12px}.sidebar a{display:block;color:#34415a;padding:6px 8px;border-radius:8px;font-size:.87rem;line-height:1.4}.sidebar a:hover{background:var(--blue2);text-decoration:none;color:var(--blue)}.content{min-width:0}.intro-card,.section,.footer-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(22px,3vw,38px);margin-bottom:22px}.intro-card{border-top:4px solid var(--blue)}.section h2{font-size:1.75rem;line-height:1.25;letter-spacing:-.025em;margin:0 0 16px;padding-top:3px}.section h3{font-size:1.2rem;line-height:1.35;margin:28px 0 10px}.section h4{font-size:1rem;margin:20px 0 7px}.section p{margin:10px 0}.lead{font-size:1.08rem;color:#36445b}.muted,.small{color:var(--muted)}.small{font-size:.88rem}.kicker{font-size:.76rem;color:var(--teal);font-weight:800;letter-spacing:.12em;text-transform:uppercase}.grid2,.grid3{display:grid;gap:14px;margin:18px 0}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.mini-card{border:1px solid var(--line);border-radius:14px;padding:17px;background:#fcfdff}.mini-card h3,.mini-card h4{margin:0 0 7px}.mini-card p{margin:0;color:#536077;font-size:.93rem}.callout{border-left:4px solid var(--blue);background:var(--blue2);padding:15px 18px;border-radius:0 12px 12px 0;margin:18px 0}.callout.good{border-color:var(--teal);background:var(--teal2)}.callout.warn{border-color:#cc8a19;background:var(--gold2)}.callout.danger{border-color:var(--red);background:var(--red2)}.callout strong{display:block;margin-bottom:4px}.pill{display:inline-block;border-radius:99px;padding:3px 9px;font-size:.74rem;font-weight:800;background:#edf1f8;color:#45516a;margin:2px 4px 2px 0}.diagram{margin:22px 0;padding:16px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(180deg,#fbfcff,#f5f8fe);overflow-x:auto}.diagram figcaption{font-size:.84rem;color:var(--muted);margin:8px 4px 0;text-align:center}.diagram svg{display:block;max-width:100%;height:auto;margin:auto}.table-wrap{overflow-x:auto;margin:16px 0}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{border:1px solid var(--line);padding:11px 12px;vertical-align:top;text-align:left}th{background:#f1f4fa;color:#34415a;font-weight:800}tr:nth-child(even) td{background:#fbfcff}pre{position:relative;overflow:auto;background:var(--code);color:var(--codeink);border-radius:13px;padding:18px 20px;margin:15px 0;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;tab-size:4}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{background:#eef1f7;border:1px solid #e1e5ee;border-radius:5px;padding:1px 5px;color:#27344f;font-size:.9em}.code-label{display:flex;justify-content:space-between;gap:12px;align-items:center;color:#aab9d5;font-size:.76rem;text-transform:uppercase;letter-spacing:.1em;margin:18px 0 -8px;padding:0 3px}.copy{border:1px solid #65728a;background:#202b40;color:#edf2ff;border-radius:7px;padding:4px 9px;font-size:.74rem;cursor:pointer}.copy:hover{background:#33425d}.math{background:#f7f9fd;border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:center;font-family:Georgia,serif;font-size:1.08rem;overflow-x:auto;margin:14px 0}.step-list{counter-reset:step;list-style:none;padding:0;margin:16px 0}.step-list li{counter-increment:step;position:relative;padding:2px 0 18px 50px;min-height:44px}.step-list li:before{content:counter(step);position:absolute;left:0;top:0;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--blue);color:#fff;font-weight:800}.checklist{list-style:none;padding:0}.checklist li{padding:5px 0 5px 27px;position:relative}.checklist li:before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:900}.toc-note{font-size:.87rem;color:var(--muted)}.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.reference-list li{margin:9px 0}.reference-list a{font-weight:650}.footer{max-width:1320px;margin:0 auto;padding:0 22px 48px;color:var(--muted);font-size:.85rem}.backtop{display:inline-block;margin-top:14px;font-size:.85rem}.two-col{columns:2;column-gap:28px}.two-col li{break-inside:avoid;margin:4px 0}.note{font-size:.85rem;color:var(--muted)}.formula{font-family:Georgia,serif}.nowrap{white-space:nowrap}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none}.sidebar nav{columns:2}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.hero{padding:46px 20px}.layout{padding:0 12px;margin:18px auto}.intro-card,.section{padding:20px}.grid2,.grid3{grid-template-columns:1fr}.sidebar nav{columns:1}.two-col{columns:1}body{font-size:15px}}
+@media print{body{background:#fff}.hero{padding:30px;background:#17264c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.layout{display:block;margin:0;max-width:none}.sidebar{display:none}.intro-card,.section,.footer-card{box-shadow:none;break-inside:avoid;border:1px solid #ddd}.section{break-before:auto}a{color:#173d99}pre{white-space:pre-wrap;overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact}.copy{display:none}.footer{padding:15px}}
+</style>
+</head>
+<body>
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div class="eyebrow">Machine Learning • Generative AI • Model Adaptation</div>
+    <h1>LLM Fine-Tuning</h1>
+    <p>A practical deep-dive into adapting a pretrained Large Language Model to a specific task, domain, format, or behavior — from training-data design and supervised fine-tuning to LoRA, QLoRA, preference optimization, evaluation, and production deployment.</p>
+    <div class="hero-meta"><span>Detailed learning notes</span><span>Concepts + diagrams + code</span><span>Updated: 30 October 2026</span><span>Beginner → Intermediate</span></div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>On this page</h2>
+    <nav>
+      <a href="#overview">1. What is fine-tuning?</a>
+      <a href="#lifecycle">2. Where it fits in LLM training</a>
+      <a href="#choose">3. Fine-tuning vs prompting vs RAG</a>
+      <a href="#methods">4. Types of fine-tuning</a>
+      <a href="#peft">5. Full FT, PEFT, LoRA & QLoRA</a>
+      <a href="#data">6. Training data engineering</a>
+      <a href="#tokenization">7. Tokenization & chat templates</a>
+      <a href="#training">8. How model training works</a>
+      <a href="#workflow">9. End-to-end workflow</a>
+      <a href="#code">10. Hands-on Hugging Face example</a>
+      <a href="#preference">11. Preference tuning: DPO & RLHF</a>
+      <a href="#evaluation">12. Evaluation strategy</a>
+      <a href="#deployment">13. Deployment & operations</a>
+      <a href="#pitfalls">14. Common problems</a>
+      <a href="#case-study">15. Worked example</a>
+      <a href="#checklist">16. Practical checklist</a>
+      <a href="#lora-deep-dive">17. Advanced LoRA & QLoRA</a>
+      <a href="#dataset-advanced">18. Advanced dataset engineering</a>
+      <a href="#compute-ops">19. Compute & training operations</a>
+      <a href="#evaluation-advanced">20. Advanced evaluation</a>
+      <a href="#decision-framework">21. Adaptation decision framework</a>
+      <a href="#interview">22. Interview questions</a>
+      <a href="#glossary">23. Glossary</a>
+      <a href="#references">24. References</a>
+    </nav>
+  </aside>
+  <main class="content">
+    <section class="intro-card">
+      <div class="kicker">Learning objectives</div>
+      <h2 style="margin:8px 0 12px;font-size:1.45rem">What you should understand by the end</h2>
+      <p class="lead">Fine-tuning is the process of taking a model that already knows how to use language and training it further so that it behaves more reliably for a particular purpose.</p>
+      <div class="grid2">
+        <div class="mini-card"><h3>Conceptual understanding</h3><p>Understand base models, post-training, supervised fine-tuning, continued pretraining, preference optimization, and when to use each approach.</p></div>
+        <div class="mini-card"><h3>Technical understanding</h3><p>Understand loss, gradients, epochs, learning rate, tokenization, LoRA adapters, quantization, and overfitting.</p></div>
+        <div class="mini-card"><h3>Practical ability</h3><p>Prepare a chat dataset, train an adapter with Hugging Face TRL and PEFT, and save a reproducible training artifact.</p></div>
+        <div class="mini-card"><h3>Production readiness</h3><p>Build a fair evaluation set, compare against the base model, deploy safely, monitor regressions, and version the result.</p></div>
+      </div>
+      <div class="callout good"><strong>Central idea</strong> Fine-tuning does not mean building an LLM from zero. It means adapting an existing pretrained model by updating some or all of its parameters using additional training data.</div>
+    </section>
+
+    <section class="section" id="overview">
+      <div class="kicker">01 · Fundamentals</div>
+      <h2>1. What is LLM Fine-Tuning?</h2>
+      <p>A Large Language Model is first pretrained on a very large corpus of text and other data. During pretraining, it learns statistical patterns that help it predict the next token. It develops broad language capability, general knowledge, and some reasoning patterns.</p>
+      <p>That general-purpose model may still not behave exactly as a business or application needs. It may return verbose answers when concise JSON is required, classify support tickets inconsistently, use the wrong terminology for a specialized domain, or fail to follow a particular response structure.</p>
+      <p><strong>Fine-tuning</strong> continues training from the pretrained model using a smaller, carefully curated dataset that represents the task and behavior we want. The optimization process changes model weights (or a smaller set of adapter weights), making the desired behavior more likely on future inputs.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 960 260" role="img" aria-label="Pretraining followed by fine-tuning and deployment diagram">
+          <defs><marker id="arr1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#60739b"/></marker></defs>
+          <rect x="18" y="62" width="190" height="125" rx="15" fill="#eaf0ff" stroke="#7893e5" stroke-width="2"/><text x="113" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#1d367b">Large corpus</text><text x="113" y="122" text-anchor="middle" font-size="13" fill="#3d4d70">Books • web • code</text><text x="113" y="143" text-anchor="middle" font-size="13" fill="#3d4d70">and other data</text>
+          <path d="M210 124 H258" stroke="#60739b" stroke-width="3" marker-end="url(#arr1)"/>
+          <rect x="265" y="62" width="190" height="125" rx="15" fill="#eaf0ff" stroke="#7893e5" stroke-width="2"/><text x="360" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#1d367b">Pretraining</text><text x="360" y="122" text-anchor="middle" font-size="13" fill="#3d4d70">Learn general language</text><text x="360" y="143" text-anchor="middle" font-size="13" fill="#3d4d70">and world patterns</text>
+          <path d="M457 124 H505" stroke="#60739b" stroke-width="3" marker-end="url(#arr1)"/>
+          <rect x="512" y="62" width="190" height="125" rx="15" fill="#e7f7f7" stroke="#48a5ab" stroke-width="2"/><text x="607" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#075e68">Fine-tuning</text><text x="607" y="122" text-anchor="middle" font-size="13" fill="#315c64">Task-specific examples</text><text x="607" y="143" text-anchor="middle" font-size="13" fill="#315c64">update model weights</text>
+          <path d="M704 124 H752" stroke="#60739b" stroke-width="3" marker-end="url(#arr1)"/>
+          <rect x="759" y="62" width="183" height="125" rx="15" fill="#fff5df" stroke="#d5a642" stroke-width="2"/><text x="850" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#805200">Specialized model</text><text x="850" y="122" text-anchor="middle" font-size="13" fill="#6e5a36">Better at target task</text><text x="850" y="143" text-anchor="middle" font-size="13" fill="#6e5a36">and desired behavior</text>
+          <text x="480" y="229" text-anchor="middle" font-size="13" fill="#5d687b">Fine-tuning starts from learned weights — it does not restart training from random parameters.</text>
+        </svg>
+        <figcaption>Figure 1. Simplified model-adaptation lifecycle.</figcaption>
+      </figure>
+      <h3>What actually changes?</h3>
+      <p>For full fine-tuning, training updates the model's trainable parameters throughout the network. For parameter-efficient fine-tuning (PEFT), most original weights stay frozen and only a small number of newly introduced parameters are updated. In both cases, training attempts to reduce a loss function that measures how poorly the model predicts the desired target tokens.</p>
+      <div class="grid2">
+        <div class="mini-card"><h4>Before fine-tuning</h4><p>“I can answer many different kinds of questions, but my output style and task accuracy may be inconsistent for your specific workflow.”</p></div>
+        <div class="mini-card"><h4>After fine-tuning</h4><p>“I have seen examples of this workflow and am more likely to respond using its expected terminology, decisions, and output format.”</p></div>
+      </div>
+      <h3>What fine-tuning does not guarantee</h3>
+      <ul>
+        <li>It does not guarantee factual correctness or eliminate hallucinations.</li>
+        <li>It does not automatically give the model access to live databases, private files, APIs, or current information.</li>
+        <li>It does not guarantee that every piece of training data will be memorized or reliably recalled.</li>
+        <li>It does not replace application authorization, input validation, safety controls, or deterministic business rules.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="lifecycle">
+      <div class="kicker">02 · LLM lifecycle</div>
+      <h2>2. Where Fine-Tuning Fits in LLM Development</h2>
+      <p>Modern LLM development is usually described as a sequence of training stages. The terminology varies across research papers and vendors, but the following mental model is useful.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 930 405" role="img" aria-label="LLM development stages from pretraining to application">
+          <defs><marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="245" y="12" width="440" height="62" rx="13" fill="#eaf0ff" stroke="#7893e5" stroke-width="2"/><text x="465" y="37" text-anchor="middle" font-size="17" font-weight="700" fill="#1d367b">1. Pretraining</text><text x="465" y="57" text-anchor="middle" font-size="12" fill="#3d4d70">Large-scale next-token prediction</text>
+          <path d="M465 75 V105" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr2)"/>
+          <rect x="245" y="111" width="440" height="62" rx="13" fill="#e7f7f7" stroke="#48a5ab" stroke-width="2"/><text x="465" y="136" text-anchor="middle" font-size="17" font-weight="700" fill="#075e68">2. Supervised fine-tuning (SFT)</text><text x="465" y="156" text-anchor="middle" font-size="12" fill="#315c64">Learn from prompt → ideal response examples</text>
+          <path d="M465 174 V204" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr2)"/>
+          <rect x="245" y="210" width="440" height="62" rx="13" fill="#fff5df" stroke="#d5a642" stroke-width="2"/><text x="465" y="235" text-anchor="middle" font-size="17" font-weight="700" fill="#805200">3. Alignment / preference optimization</text><text x="465" y="255" text-anchor="middle" font-size="12" fill="#6e5a36">Learn which responses people or reward criteria prefer</text>
+          <path d="M465 273 V303" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr2)"/>
+          <rect x="245" y="309" width="440" height="62" rx="13" fill="#f0ecff" stroke="#9a83d8" stroke-width="2"/><text x="465" y="334" text-anchor="middle" font-size="17" font-weight="700" fill="#513c93">4. Evaluation, safety and deployment</text><text x="465" y="354" text-anchor="middle" font-size="12" fill="#514773">Measure, test, serve, monitor, improve</text>
+          <text x="35" y="42" font-size="12" fill="#5d687b">Broad data</text><path d="M112 43 H232" stroke="#65789c" stroke-width="1.8" marker-end="url(#arr2)"/>
+          <text x="35" y="143" font-size="12" fill="#5d687b">Task examples</text><path d="M112 144 H232" stroke="#65789c" stroke-width="1.8" marker-end="url(#arr2)"/>
+          <text x="35" y="244" font-size="12" fill="#5d687b">Preference labels</text><path d="M125 245 H232" stroke="#65789c" stroke-width="1.8" marker-end="url(#arr2)"/>
+          <text x="720" y="341" font-size="12" fill="#5d687b">Production feedback</text><path d="M690 340 H845 V385 H465 V375" fill="none" stroke="#65789c" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arr2)"/>
+        </svg>
+        <figcaption>Figure 2. A simplified post-training path. Not every application requires every stage.</figcaption>
+      </figure>
+      <h3>Pretraining</h3>
+      <p>The model learns general patterns from a very large dataset, commonly by predicting the next token in a sequence. It is expensive and usually outside the scope of normal application teams.</p>
+      <h3>Supervised fine-tuning (SFT)</h3>
+      <p>The model is shown examples of desired behavior. A dataset might contain customer questions paired with ideal support answers, SQL requests paired with correct SQL, or incident descriptions paired with structured triage output.</p>
+      <h3>Preference alignment</h3>
+      <p>The model is trained to prefer responses judged better according to human or programmatic criteria. Examples include a helpful answer over an incomplete answer, or a concise answer over an unnecessarily long one.</p>
+      <h3>Evaluation and deployment</h3>
+      <p>Training is not proof of improvement. The candidate must be compared with the base model and current production baseline, tested on unseen examples, checked for regressions, and monitored after release.</p>
+    </section>
+
+    <section class="section" id="choose">
+      <div class="kicker">03 · Architecture decision</div>
+      <h2>3. Fine-Tuning vs Prompt Engineering vs RAG</h2>
+      <p>These techniques solve different problems. They can also be combined. A common mistake is to fine-tune a model merely because it needs information that changes frequently.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Approach</th><th>What changes?</th><th>Best suited for</th><th>Typical limitation</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Prompt engineering</strong></td><td>Instructions and examples supplied at inference time.</td><td>Clear instructions, role, output format, short task guidance, quick experimentation.</td><td>Prompt can grow long; behavior may remain inconsistent; consumes context tokens.</td></tr>
+          <tr><td><strong>RAG</strong></td><td>Relevant external documents are retrieved and placed in the model's context.</td><td>Fresh, private, source-grounded or frequently updated knowledge.</td><td>Retrieval quality, chunking, indexing and context assembly become additional failure points.</td></tr>
+          <tr><td><strong>Fine-tuning</strong></td><td>Model weights or adapter weights are updated.</td><td>Consistent style, task behavior, terminology, classification, structured outputs, specialized patterns.</td><td>Needs high-quality examples, training infrastructure and ongoing evaluation; does not create a live knowledge connection.</td></tr>
+          <tr><td><strong>Tool / function calling</strong></td><td>The application gives the model access to controlled external functions.</td><td>Actions such as querying a database, creating a ticket, calculating a value, or invoking an API.</td><td>Requires secure tool design, permission checks, validation and reliable execution.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Decision guide</h3>
+      <figure class="diagram">
+        <svg viewBox="0 0 900 390" role="img" aria-label="Decision flow for prompting, RAG, tools and fine-tuning">
+          <defs><marker id="arr3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="305" y="10" width="290" height="55" rx="12" fill="#edf1f8" stroke="#9ba8bd"/><text x="450" y="33" text-anchor="middle" font-size="15" font-weight="700" fill="#26344d">What is the main problem?</text><text x="450" y="51" text-anchor="middle" font-size="11" fill="#526078">Identify the failure mode first</text>
+          <path d="M450 65 V94 H160 V119 M450 94 V119 M450 94 H740 V119" fill="none" stroke="#65789c" stroke-width="2" marker-end="url(#arr3)"/>
+          <rect x="35" y="124" width="250" height="83" rx="12" fill="#eaf0ff" stroke="#7893e5"/><text x="160" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#1d367b">Instructions are unclear?</text><text x="160" y="177" text-anchor="middle" font-size="12" fill="#3d4d70">Start with prompt engineering</text>
+          <rect x="325" y="124" width="250" height="83" rx="12" fill="#e7f7f7" stroke="#48a5ab"/><text x="450" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#075e68">Needs current/private facts?</text><text x="450" y="177" text-anchor="middle" font-size="12" fill="#315c64">Use RAG or a secure tool</text>
+          <rect x="615" y="124" width="250" height="83" rx="12" fill="#fff5df" stroke="#d5a642"/><text x="740" y="151" text-anchor="middle" font-size="14" font-weight="700" fill="#805200">Needs to perform an action?</text><text x="740" y="177" text-anchor="middle" font-size="12" fill="#6e5a36">Use controlled tool calling</text>
+          <path d="M160 207 V246 H450 V272 M450 207 V272 M740 207 V246 H450" fill="none" stroke="#65789c" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arr3)"/>
+          <rect x="250" y="277" width="400" height="94" rx="13" fill="#f0ecff" stroke="#9a83d8" stroke-width="2"/><text x="450" y="308" text-anchor="middle" font-size="15" font-weight="700" fill="#513c93">Fine-tune when a repeatable behavior remains weak</text><text x="450" y="333" text-anchor="middle" font-size="12" fill="#514773">Build examples → train → evaluate → compare</text><text x="450" y="352" text-anchor="middle" font-size="11" fill="#514773">Often combined with RAG, prompts and tools</text>
+        </svg>
+        <figcaption>Figure 3. Choose the technique based on the problem, not on the popularity of the technique.</figcaption>
+      </figure>
+      <div class="callout warn"><strong>Rule of thumb</strong> If the answer must reflect a policy document updated yesterday, retrieve the latest policy. If the model must consistently transform an input into your organization's preferred schema, fine-tuning may help. If it must execute a payment or update a ticket, use a controlled tool with authorization.</div>
+      <h3>Can RAG and fine-tuning work together?</h3>
+      <p>Yes. Fine-tuning can teach the model how to interpret retrieved passages, cite evidence, follow domain-specific terminology, and produce a consistent answer format. RAG supplies the current facts. The combination can be more effective than either approach alone.</p>
+    </section>
+
+    <section class="section" id="methods">
+      <div class="kicker">04 · Training methods</div>
+      <h2>4. Types of Fine-Tuning and Post-Training</h2>
+      <h3>4.1 Continued pretraining (domain-adaptive pretraining)</h3>
+      <p>The model continues next-token training on a large collection of domain text, such as technical manuals, research papers, financial documents, or code. The examples are often raw text rather than question-answer pairs.</p>
+      <p><strong>Use it when:</strong> the model is weak at the language, vocabulary, syntax, or general patterns of a domain and you have a substantial, legally usable corpus.</p>
+      <p><strong>Example:</strong> continuing training on a large corpus of engineering maintenance manuals before instruction-tuning the model to answer maintenance questions.</p>
+      <h3>4.2 Supervised fine-tuning (SFT / instruction tuning)</h3>
+      <p>The dataset contains input-output demonstrations. The model learns to generate the desired output after a prompt or conversation. SFT is the most common starting point for application-level fine-tuning.</p>
+      <div class="math">Training example: <strong>prompt / conversation</strong> → <strong>target response</strong></div>
+      <p>Typical uses include intent classification, extraction, response generation, summarization style, code transformation, structured JSON, and domain-specific instruction following.</p>
+      <h3>4.3 Preference fine-tuning</h3>
+      <p>Instead of showing only one ideal answer, the dataset records which of two or more possible answers is preferred. A preference example may contain a prompt, a <em>chosen</em> response, and a <em>rejected</em> response.</p>
+      <p>Preference training is useful when “good” is easier to rank than to write as a single exact target — for example, tone, helpfulness, completeness, or prioritization.</p>
+      <h3>4.4 Reinforcement learning-based fine-tuning</h3>
+      <p>The model generates outputs that receive scores from a reward function, grader, simulator, or expert evaluator. Optimization then increases the likelihood of outputs that receive higher rewards. The design of the reward signal is critical: a poorly designed reward can teach the model to exploit the metric rather than solve the intended task.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Method</th><th>Training signal</th><th>Example question</th></tr></thead>
+        <tbody>
+          <tr><td>Continued pretraining</td><td>Next token in domain text</td><td>Can the model better model domain-specific language?</td></tr>
+          <tr><td>SFT</td><td>Demonstrated ideal answer</td><td>Can it respond the way we want?</td></tr>
+          <tr><td>DPO / preference optimization</td><td>Chosen vs rejected response</td><td>Can it prefer the better response?</td></tr>
+          <tr><td>RLHF / reward-driven tuning</td><td>Reward or graded outcome</td><td>Can it optimize a measurable objective across generated outputs?</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="section" id="peft">
+      <div class="kicker">05 · Parameter efficiency</div>
+      <h2>5. Full Fine-Tuning, PEFT, LoRA and QLoRA</h2>
+      <h3>5.1 Full fine-tuning</h3>
+      <p>In full fine-tuning, all (or nearly all) model parameters are updated. This offers high adaptation flexibility, but optimizer states, gradients, activations, and model weights can require substantial GPU memory. Storing a separate full copy for every task can also be expensive.</p>
+      <h3>5.2 Parameter-Efficient Fine-Tuning (PEFT)</h3>
+      <p>PEFT methods reduce training cost by updating only a small fraction of parameters. The original model is usually kept frozen, while a compact set of trainable parameters is added or selected. The resulting adapter can be stored separately from the base model.</p>
+      <p>Common PEFT families include LoRA and its variants, adapter layers, prompt tuning, prefix tuning, and selective layer tuning. PEFT often reduces compute and storage, but it is not guaranteed to match full fine-tuning on every task.</p>
+      <h3>5.3 LoRA — Low-Rank Adaptation</h3>
+      <p>LoRA is a widely used PEFT method. Instead of updating a large weight matrix directly, LoRA freezes the original matrix and learns a low-rank update using two smaller matrices.</p>
+      <div class="math">W′ = W + ΔW &nbsp;&nbsp; where &nbsp; ΔW = (α / r) · B A</div>
+      <p>Here, <code>W</code> is the pretrained weight matrix, <code>A</code> and <code>B</code> are smaller trainable matrices, <code>r</code> is the rank, and <code>α</code> is a scaling parameter. Only A and B are trained. The rank controls the capacity of the adapter: a higher rank can represent a richer update, but generally uses more trainable parameters and memory.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 920 310" role="img" aria-label="LoRA freezes base weights and trains low rank adapter matrices">
+          <defs><marker id="arr4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="30" y="75" width="260" height="145" rx="14" fill="#edf1f8" stroke="#8795ad" stroke-width="2"/><text x="160" y="111" text-anchor="middle" font-size="17" font-weight="700" fill="#26344d">Pretrained matrix W</text><text x="160" y="140" text-anchor="middle" font-size="13" fill="#536077">Large original weights</text><text x="160" y="167" text-anchor="middle" font-size="13" font-weight="700" fill="#536077">FROZEN</text><text x="160" y="192" text-anchor="middle" font-size="11" fill="#536077">No gradient update</text>
+          <text x="326" y="153" font-size="26" font-weight="700" fill="#64748b">+</text>
+          <rect x="365" y="75" width="190" height="145" rx="14" fill="#e7f7f7" stroke="#48a5ab" stroke-width="2"/><text x="460" y="111" text-anchor="middle" font-size="17" font-weight="700" fill="#075e68">A × B</text><text x="460" y="140" text-anchor="middle" font-size="13" fill="#315c64">Low-rank update</text><text x="460" y="167" text-anchor="middle" font-size="13" font-weight="700" fill="#087f8c">TRAINABLE</text><text x="460" y="192" text-anchor="middle" font-size="11" fill="#315c64">Small adapter matrices</text>
+          <path d="M558 147 H630" stroke="#65789c" stroke-width="3" marker-end="url(#arr4)"/>
+          <rect x="638" y="75" width="250" height="145" rx="14" fill="#fff5df" stroke="#d5a642" stroke-width="2"/><text x="763" y="111" text-anchor="middle" font-size="17" font-weight="700" fill="#805200">Adapted behavior</text><text x="763" y="140" text-anchor="middle" font-size="13" fill="#6e5a36">W + (α/r)BA</text><text x="763" y="169" text-anchor="middle" font-size="12" fill="#6e5a36">Base + learned update</text>
+          <path d="M460 222 V256 H160 V224" fill="none" stroke="#48a5ab" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr4)"/><text x="315" y="278" text-anchor="middle" font-size="12" fill="#087f8c">Gradients update A and B, not W</text>
+        </svg>
+        <figcaption>Figure 4. Simplified LoRA intuition. Adapter placement and target modules depend on model architecture.</figcaption>
+      </figure>
+      <h4>LoRA parameters to recognize</h4>
+      <ul>
+        <li><code>r</code>: low-rank dimension / adapter capacity.</li>
+        <li><code>lora_alpha</code>: scaling factor for the update.</li>
+        <li><code>lora_dropout</code>: dropout applied to the LoRA path during training.</li>
+        <li><code>target_modules</code>: model layers into which LoRA adapters are inserted (for example, attention projection layers in some Transformer architectures).</li>
+      </ul>
+      <h3>5.4 QLoRA</h3>
+      <p>QLoRA combines a quantized, frozen base model with trainable LoRA adapters. The base weights are commonly loaded in 4-bit form, while adapter parameters are trained at a suitable higher precision. Gradients pass through the frozen quantized model to update the adapters; the original quantized weights are not updated.</p>
+      <ul>
+        <li><strong>NF4:</strong> a 4-bit data type designed for normally distributed weights.</li>
+        <li><strong>Double quantization:</strong> quantizes quantization constants to reduce memory overhead.</li>
+        <li><strong>Paged optimizers:</strong> help manage memory spikes in supported training configurations.</li>
+      </ul>
+      <p>QLoRA can make adaptation of larger models feasible on more modest GPU hardware. Actual capacity depends on model size, context length, batch size, GPU memory, attention implementation, and runtime settings.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Method</th><th>Base weights</th><th>Trainable parameters</th><th>Resource profile</th><th>Typical reason to choose it</th></tr></thead>
+        <tbody>
+          <tr><td>Full fine-tuning</td><td>Full precision / mixed precision</td><td>Most or all model weights</td><td>Highest memory and compute demand</td><td>Need maximum adaptation capacity and have sufficient infrastructure.</td></tr>
+          <tr><td>LoRA</td><td>Usually frozen, standard precision</td><td>Small adapter matrices</td><td>Lower than full fine-tuning</td><td>Strong practical default for task adaptation.</td></tr>
+          <tr><td>QLoRA</td><td>Frozen, quantized (often 4-bit)</td><td>LoRA adapters</td><td>Lower base-model memory footprint</td><td>GPU memory is constrained.</td></tr>
+          <tr><td>Prompt / prefix tuning</td><td>Frozen</td><td>Learned virtual tokens / prefixes</td><td>Very small parameter updates</td><td>Lightweight adaptation where method capacity is sufficient.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><strong>Practical starting point</strong> For many application teams adapting an open instruction model, LoRA is a sensible baseline. Try QLoRA when GPU memory is the main constraint. Consider full fine-tuning only after establishing a measurable need and confirming the compute budget.</div>
+    </section>
+
+    <section class="section" id="data">
+      <div class="kicker">06 · Data engineering</div>
+      <h2>6. Training Data: The Most Important Part of Fine-Tuning</h2>
+      <p>Fine-tuning quality is strongly constrained by the quality, relevance, consistency, and coverage of the examples. A larger dataset is not automatically better. A small, carefully reviewed dataset can outperform a much larger noisy dataset.</p>
+      <h3>6.1 Common training-data shapes</h3>
+      <div class="grid3">
+        <div class="mini-card"><h4>Instruction → response</h4><p>Teaches a model how to answer a request.</p><span class="pill">SFT</span></div>
+        <div class="mini-card"><h4>Conversation</h4><p>Teaches multi-turn dialogue, tone, and context handling.</p><span class="pill">Chat SFT</span></div>
+        <div class="mini-card"><h4>Prompt → completion</h4><p>Teaches a specific continuation or transformation.</p><span class="pill">SFT</span></div>
+        <div class="mini-card"><h4>Raw domain text</h4><p>Provides domain-language exposure without explicit target answers.</p><span class="pill">Continued pretraining</span></div>
+        <div class="mini-card"><h4>Prompt + chosen + rejected</h4><p>Captures preference between candidate answers.</p><span class="pill">DPO</span></div>
+        <div class="mini-card"><h4>Prompt + grader / reward</h4><p>Scores generated outputs against an objective.</p><span class="pill">RL / RFT</span></div>
+      </div>
+      <h3>6.2 Example: chat-style JSONL</h3>
+      <p>JSON Lines (JSONL) stores one independent JSON object per line. For chat fine-tuning, a common representation is a <code>messages</code> array containing role/content pairs. The exact schema must match the trainer or provider being used.</p>
+      <div class="code-label"><span>train.jsonl — one example per line</span><button class="copy" data-copy="jsonl-sample">Copy</button></div>
+      <pre id="jsonl-sample"><code>{"messages":[
+  {"role":"system","content":"You are a support-ticket classifier. Return only valid JSON."},
+  {"role":"user","content":"The customer says they were charged twice for the same invoice."},
+  {"role":"assistant","content":"{\"category\":\"billing\",\"priority\":\"medium\",\"needs_human\":true}"}
+]}
+{"messages":[
+  {"role":"system","content":"You are a support-ticket classifier. Return only valid JSON."},
+  {"role":"user","content":"The mobile application crashes immediately after login."},
+  {"role":"assistant","content":"{\"category\":\"technical\",\"priority\":\"high\",\"needs_human\":true}"}
+]}</code></pre>
+      <p class="small">The code block displays one JSON object with line breaks for readability; in a real JSONL file, place the entire object on one line. Put each additional object on the next line, without commas between records.</p>
+      <h3>6.3 What makes a good example?</h3>
+      <ul>
+        <li><strong>Realistic:</strong> resembles production inputs, including abbreviations, typos, ambiguity, and common edge cases where appropriate.</li>
+        <li><strong>Correct:</strong> the target answer has been reviewed and is actually the behavior you want.</li>
+        <li><strong>Complete:</strong> the answer does not rely on hidden information absent from the prompt or retrieved context.</li>
+        <li><strong>Consistent:</strong> similar situations receive compatible labels, terminology, formatting, and decision rules.</li>
+        <li><strong>Diverse:</strong> covers common examples, rare but important cases, different user styles, and negative examples when relevant.</li>
+        <li><strong>Balanced:</strong> does not accidentally overrepresent one class, tone, refusal behavior, or response length.</li>
+        <li><strong>Permitted:</strong> has a lawful basis for use and does not expose secrets or personal information unnecessarily.</li>
+      </ul>
+      <h3>6.4 Dataset splitting</h3>
+      <p>Keep separate training, validation, and test sets. The training set updates the model. The validation set helps compare checkpoints and tune hyperparameters. The test set is reserved for final, relatively unbiased measurement.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Split</th><th>Purpose</th><th>Typical use</th></tr></thead>
+        <tbody><tr><td>Train</td><td>Teach the model</td><td>Gradient updates during training.</td></tr><tr><td>Validation</td><td>Guide model selection</td><td>Check loss, tune settings, identify overfitting.</td></tr><tr><td>Test / holdout</td><td>Estimate generalization</td><td>Final comparison against baseline; never train on it.</td></tr></tbody>
+      </table></div>
+      <p>A random split is not always sufficient. If near-duplicate tickets, conversations, documents, or users appear in multiple splits, the test score can be misleading. Consider grouping by customer, source document, time window, or conversation so related examples do not leak across the boundary.</p>
+      <h3>6.5 Data cleaning and governance</h3>
+      <ul>
+        <li>Remove duplicate, corrupted, contradictory, irrelevant, and low-quality records.</li>
+        <li>Mask credentials, API keys, tokens, personal data, and confidential customer content unless a properly reviewed use case requires it.</li>
+        <li>Normalize labels and output schemas; validate JSON when JSON is the target.</li>
+        <li>Track provenance, collection date, license, consent or legal basis, and transformation history.</li>
+        <li>Keep a data-quality report with counts by category, source, language, length, and split.</li>
+      </ul>
+      <div class="callout danger"><strong>Data leakage warning</strong> Never place examples from the final evaluation set into training, including paraphrased or near-duplicate versions. Leakage can make a fine-tuned model appear much better than it is in real use.</div>
+    </section>
+
+    <section class="section" id="tokenization">
+      <div class="kicker">07 · Text representation</div>
+      <h2>7. Tokenization, Chat Templates and Loss Masking</h2>
+      <h3>7.1 Tokens are not the same as words</h3>
+      <p>LLMs process token IDs rather than raw text. A tokenizer may split one word into multiple subword tokens, while punctuation, whitespace, code, and multilingual text may be represented in different ways. Context length is measured in tokens, not characters or words.</p>
+      <p>During preprocessing, raw strings are converted to token IDs. The model receives a sequence such as <code>[101, 392, 1845, ...]</code> (illustrative only), and predicts a probability distribution for the next token at each position.</p>
+      <h3>7.2 Chat template</h3>
+      <p>Instruction models often use a model-specific template to encode roles and turn boundaries. The template may insert special tokens to mark system, user and assistant messages, and indicate where an assistant response ends or where a tool handoff occurs.</p>
+      <div class="math">Rendered conversation = role markers + message content + turn / control tokens</div>
+      <p>Use the template expected by the chosen model. A dataset that looks valid as plain text may be formatted incorrectly for a chat model. When possible, use the tokenizer's chat-template utility rather than manually inventing role markers.</p>
+      <h3>7.3 Labels and loss masking</h3>
+      <p>For causal language-model training, token labels usually represent the next-token targets. In chat instruction tuning, a common objective is to compute loss on assistant target tokens while masking user and system prompt tokens with an ignore index. Some training configurations instead calculate loss over the whole concatenated sequence. Understand which behavior your trainer uses.</p>
+      <div class="callout"><strong>Why masking matters</strong> The model should learn what a good assistant response looks like. Accidentally training it to reproduce user messages or system instructions as target completions can waste capacity and produce undesirable behavior.</div>
+      <h3>7.4 Truncation, padding and packing</h3>
+      <ul>
+        <li><strong>Truncation:</strong> cuts sequences that exceed the configured maximum length. Check that it does not remove the answer or critical context.</li>
+        <li><strong>Padding:</strong> makes examples in a batch the same length. Padding tokens should be handled correctly by the attention mask and loss labels.</li>
+        <li><strong>Packing:</strong> combines shorter examples into a sequence to reduce unused context space. Use it only when the trainer handles example boundaries correctly.</li>
+        <li><strong>Context length:</strong> choose a limit that covers real production inputs without needlessly increasing memory use.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="training">
+      <div class="kicker">08 · Optimization mechanics</div>
+      <h2>8. How Fine-Tuning Works Internally</h2>
+      <h3>8.1 Forward pass</h3>
+      <p>The model receives tokenized input and produces logits: unnormalized scores for the possible next tokens at each position. Applying softmax converts logits into probabilities.</p>
+      <h3>8.2 Loss calculation</h3>
+      <p>For next-token prediction, the standard objective is cross-entropy loss. It penalizes the model when it assigns low probability to the correct next token. With masked labels, ignored tokens do not contribute to the loss.</p>
+      <div class="math">L = − Σ<sub>t ∈ target positions</sub> log P<sub>θ</sub>(y<sub>t</sub> | y<sub>&lt;t</sub>)</div>
+      <p>Here, <span class="formula">θ</span> represents trainable parameters and <span class="formula">y<sub>t</sub></span> is the correct target token at position t. The objective is to make the desired continuation more probable.</p>
+      <h3>8.3 Backpropagation and optimizer update</h3>
+      <p>Backpropagation computes gradients of the loss with respect to trainable parameters. An optimizer such as AdamW uses those gradients to update the parameters. With LoRA, gradients update the adapter matrices; frozen base weights remain unchanged.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 930 210" role="img" aria-label="Training loop forward pass loss backward pass optimizer update">
+          <defs><marker id="arr5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="12" y="45" width="165" height="105" rx="12" fill="#eaf0ff" stroke="#7893e5"/><text x="94" y="78" text-anchor="middle" font-size="15" font-weight="700" fill="#1d367b">Input batch</text><text x="94" y="103" text-anchor="middle" font-size="12" fill="#3d4d70">Token IDs + masks</text>
+          <path d="M179 97 H216" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr5)"/>
+          <rect x="224" y="45" width="165" height="105" rx="12" fill="#eaf0ff" stroke="#7893e5"/><text x="306" y="78" text-anchor="middle" font-size="15" font-weight="700" fill="#1d367b">Forward pass</text><text x="306" y="103" text-anchor="middle" font-size="12" fill="#3d4d70">Model predicts logits</text>
+          <path d="M391 97 H428" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr5)"/>
+          <rect x="436" y="45" width="165" height="105" rx="12" fill="#fff5df" stroke="#d5a642"/><text x="518" y="78" text-anchor="middle" font-size="15" font-weight="700" fill="#805200">Loss</text><text x="518" y="103" text-anchor="middle" font-size="12" fill="#6e5a36">Compare prediction</text><text x="518" y="121" text-anchor="middle" font-size="12" fill="#6e5a36">with target tokens</text>
+          <path d="M603 97 H640" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr5)"/>
+          <rect x="648" y="45" width="125" height="105" rx="12" fill="#e7f7f7" stroke="#48a5ab"/><text x="710" y="78" text-anchor="middle" font-size="15" font-weight="700" fill="#075e68">Backward</text><text x="710" y="103" text-anchor="middle" font-size="12" fill="#315c64">Compute</text><text x="710" y="121" text-anchor="middle" font-size="12" fill="#315c64">gradients</text>
+          <path d="M775 97 H812" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr5)"/>
+          <rect x="820" y="45" width="98" height="105" rx="12" fill="#f0ecff" stroke="#9a83d8"/><text x="869" y="78" text-anchor="middle" font-size="14" font-weight="700" fill="#513c93">Update</text><text x="869" y="103" text-anchor="middle" font-size="11" fill="#514773">Optimizer</text><text x="869" y="120" text-anchor="middle" font-size="11" fill="#514773">step</text>
+          <path d="M869 153 V183 H306 V153" fill="none" stroke="#65789c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr5)"/><text x="590" y="202" text-anchor="middle" font-size="11" fill="#5d687b">Repeat for batches across epochs</text>
+        </svg>
+        <figcaption>Figure 5. One training step, repeated many times.</figcaption>
+      </figure>
+      <h3>8.4 Important training terms</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Term</th><th>Meaning</th><th>What to watch</th></tr></thead>
+        <tbody>
+          <tr><td>Epoch</td><td>One pass over the training dataset.</td><td>Too many epochs can cause memorization and reduced generalization.</td></tr>
+          <tr><td>Batch size</td><td>Number of examples processed together for one forward/backward pass.</td><td>Limited by GPU memory and sequence length.</td></tr>
+          <tr><td>Gradient accumulation</td><td>Accumulates gradients over multiple micro-batches before an optimizer update.</td><td>Raises effective batch size without holding the full batch in memory.</td></tr>
+          <tr><td>Learning rate</td><td>Controls the scale of optimizer updates.</td><td>Too high can destabilize training; too low can make learning ineffective or slow.</td></tr>
+          <tr><td>Warmup</td><td>Gradually increases learning rate at the start.</td><td>Can reduce unstable early updates.</td></tr>
+          <tr><td>Weight decay</td><td>Regularization applied by the optimizer to discourage overly large weights.</td><td>Its useful setting depends on the model and training recipe.</td></tr>
+          <tr><td>Checkpoint</td><td>Saved model state at a particular training step or epoch.</td><td>Allows rollback and comparison of intermediate models.</td></tr>
+          <tr><td>Perplexity</td><td>Exponential of average token-level cross-entropy loss.</td><td>Useful for language modeling, but not sufficient as an application quality metric.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>8.5 Overfitting and catastrophic forgetting</h3>
+      <p><strong>Overfitting</strong> occurs when the model performs well on training examples but poorly on unseen examples. Training loss may keep falling while validation quality gets worse. <strong>Catastrophic forgetting</strong> describes loss of previously learned capabilities after further training on a narrower distribution.</p>
+      <p>Mitigations include better data diversity, fewer epochs, lower learning rates, early stopping, smaller or more conservative updates, mixing representative data, and testing general capabilities that must be retained.</p>
+    </section>
+
+
+      <h3>8.6 Effective batch size and training telemetry</h3>
+      <p>When gradient accumulation or multiple GPUs are used, the micro-batch size is not the same as the effective batch size used for an optimizer update.</p>
+      <div class="math">Effective batch size = per-device batch size × gradient accumulation steps × number of devices</div>
+      <p><strong>Example:</strong> 2 examples per device × 4 accumulation steps × 2 GPUs = an effective batch size of 16, assuming the distributed trainer counts devices in the usual way.</p>
+      <p>Monitor more than loss: inspect the learning-rate schedule, gradient norms, GPU memory and utilization, tokens per second, data-loader throughput, checkpoint health, and validation metrics. For reward-based training, also inspect reward distributions, grader failures, and signs of reward hacking.</p>
+    
+<section class="section" id="workflow">
+      <div class="kicker">09 · Delivery process</div>
+      <h2>9. End-to-End Fine-Tuning Workflow</h2>
+      <ol class="step-list">
+        <li><strong>Define the task and success criteria.</strong><br>State the desired behavior, expected input distribution, output schema, unacceptable errors, latency needs, and business metric.</li>
+        <li><strong>Establish a baseline.</strong><br>Test the base model with a well-designed prompt. Record quality, latency, token usage, and cost before changing anything.</li>
+        <li><strong>Build an evaluation set first.</strong><br>Prepare representative examples, including edge cases. Keep a holdout set separate from training data.</li>
+        <li><strong>Collect and curate training data.</strong><br>Use expert demonstrations, reviewed historical examples, or carefully validated synthetic examples. Remove leakage and sensitive information.</li>
+        <li><strong>Select the base model.</strong><br>Check task fit, context length, tokenizer and chat template, language support, license, commercial-use conditions, hardware requirements, and deployment options.</li>
+        <li><strong>Choose a tuning method.</strong><br>Start with SFT. Use LoRA as a practical baseline, QLoRA for memory-constrained setups, and preference optimization if ranked outputs are needed.</li>
+        <li><strong>Train and track experiments.</strong><br>Record dataset version, base-model revision, library versions, hyperparameters, random seed, hardware, checkpoints, and metrics.</li>
+        <li><strong>Evaluate against the baseline.</strong><br>Compare task quality, regression cases, safety, latency, memory, and cost. Use human review where automatic metrics are inadequate.</li>
+        <li><strong>Package and deploy.</strong><br>Version the adapter or merged model, tokenizer, chat template, inference configuration, and any required metadata.</li>
+        <li><strong>Monitor and iterate.</strong><br>Track real-world performance, new error categories, distribution shift, user feedback, and rollback criteria. Add reviewed examples to the next training cycle.</li>
+      </ol>
+      <div class="callout good"><strong>Use an evaluation-first loop</strong> Define the tests before training. Otherwise, it is easy to mistake a model that produces more convincing-looking answers for a model that is actually more correct.</div>
+    </section>
+
+    <section class="section" id="code">
+      <div class="kicker">10 · Hands-on implementation</div>
+      <h2>10. Practical Fine-Tuning with Hugging Face, TRL and PEFT</h2>
+      <p>This example demonstrates supervised fine-tuning of an instruction/chat model with LoRA. It assumes an open model whose license permits your intended use, a supported chat template, and a GPU environment configured for PyTorch. Replace the model ID and architecture-specific adapter settings with values suitable for your selected model.</p>
+      <h3>10.1 Install the main libraries</h3>
+      <div class="code-label"><span>Terminal</span><button class="copy" data-copy="install-code">Copy</button></div>
+      <pre id="install-code"><code>pip install -U torch transformers datasets trl peft accelerate</code></pre>
+      <p>For 4-bit QLoRA training, you may also need <code>bitsandbytes</code> and a compatible CUDA environment. Installation compatibility depends on your operating system, GPU, CUDA runtime, and package versions.</p>
+      <h3>10.2 Suggested project structure</h3>
+      <pre><code>llm-finetuning/
+├── data/
+│   ├── train.jsonl
+│   ├── validation.jsonl
+│   └── test.jsonl
+├── train_lora.py
+├── requirements.txt
+├── outputs/
+└── README.md</code></pre>
+      <h3>10.3 Create the dataset</h3>
+      <p>Save examples in JSONL format. The sample schema below uses conversational messages. Keep the content close to what the application will send at inference time.</p>
+      <div class="code-label"><span>data/train.jsonl</span><button class="copy" data-copy="data-code">Copy</button></div>
+      <pre id="data-code"><code>{"messages":[{"role":"system","content":"You are a concise support-ticket classifier. Return JSON only."},{"role":"user","content":"My invoice was charged twice."},{"role":"assistant","content":"{\"category\":\"billing\",\"priority\":\"medium\"}"}]}
+{"messages":[{"role":"system","content":"You are a concise support-ticket classifier. Return JSON only."},{"role":"user","content":"The service is unavailable for all users."},{"role":"assistant","content":"{\"category\":\"outage\",\"priority\":\"critical\"}"}]}</code></pre>
+      <h3>10.4 Training script — LoRA SFT</h3>
+      <p>The example uses TRL's <code>SFTTrainer</code> with a conversational dataset and PEFT's <code>LoraConfig</code>. The configuration is a starting template, not a universal recipe. Confirm that your model supports the listed target modules and that your installed TRL version exposes the parameters used below.</p>
+      <div class="code-label"><span>train_lora.py</span><button class="copy" data-copy="train-code">Copy</button></div>
+      <pre id="train-code"><code>import os
+import torch
+from datasets import load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, TaskType
+from trl import SFTConfig, SFTTrainer
+
+# Replace with a model you are permitted to use.
+MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+OUTPUT_DIR = "./outputs/support-ticket-lora"
+
+
+def main() -> None:
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "This example expects a CUDA GPU. Adapt the setup for your hardware."
+        )
+
+    # JSONL records should contain a conversational `messages` field.
+    datasets = load_dataset(
+        "json",
+        data_files={
+            "train": "data/train.jsonl",
+            "validation": "data/validation.jsonl",
+        },
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID,
+        torch_dtype="auto",
+    )
+    model.config.use_cache = False  # recommended during gradient-based training
+
+    # These module names are architecture-dependent. Inspect the model first.
+    lora_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+        bias="none",
+    )
+
+    training_args = SFTConfig(
+        output_dir=OUTPUT_DIR,
+        num_train_epochs=2,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
+        gradient_accumulation_steps=8,
+        learning_rate=2e-4,
+        logging_steps=10,
+        eval_strategy="steps",
+        eval_steps=100,
+        save_steps=100,
+        save_total_limit=2,
+        weight_decay=0.01,
+        warmup_ratio=0.03,
+        # Confirm these options against your installed TRL version.
+        max_length=2048,
+        report_to="none",
+        fp16=not torch.cuda.is_bf16_supported(),
+        bf16=torch.cuda.is_bf16_supported(),
+    )
+
+    trainer = SFTTrainer(
+        model=model,
+        args=training_args,
+        train_dataset=datasets["train"],
+        eval_dataset=datasets["validation"],
+        processing_class=tokenizer,
+        peft_config=lora_config,
+    )
+
+    trainer.train()
+    trainer.save_model(OUTPUT_DIR)
+    tokenizer.save_pretrained(OUTPUT_DIR)
+    print(f"Adapter/model artifacts saved to: {OUTPUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+      <div class="callout warn"><strong>Important implementation checks</strong> This is a reference training template, not a guarantee that every model works unchanged. Verify the model's chat template, LoRA target module names, precision support, TRL version, dataset schema, evaluation argument names, and loss-masking behavior before running a full job. For conversational SFT, consider assistant-only loss when the chat template and trainer support it.</div>
+      <h3>10.5 Run training</h3>
+      <pre><code>python train_lora.py</code></pre>
+      <p>The trainer reads batches, applies the model's chat formatting, calculates the language-modeling loss, updates LoRA parameters, evaluates on the validation split, and writes checkpoints. Monitor GPU memory, training loss, validation loss, throughput, and any warnings from the tokenizer or trainer.</p>
+      <h3>10.6 QLoRA loading pattern</h3>
+      <p>QLoRA adds a quantized base-model loading step before attaching the same type of LoRA adapter. The exact quantization setup depends on GPU and library compatibility.</p>
+      <div class="code-label"><span>Illustrative QLoRA setup</span><button class="copy" data-copy="qlora-code">Copy</button></div>
+      <pre id="qlora-code"><code>import torch
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+from peft import prepare_model_for_kbit_training
+
+quant_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=(
+        torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    ),
+)
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    quantization_config=quant_config,
+    device_map="auto",
+)
+
+# Prepare the quantized base model before adapter training.
+model = prepare_model_for_kbit_training(model)
+
+# Pass this model and the same architecture-appropriate LoraConfig
+# to SFTTrainer. Do not attempt to update the frozen 4-bit base weights.</code></pre>
+      <h3>10.7 What should be saved?</h3>
+      <ul>
+        <li>Adapter weights and adapter configuration (or the merged model if you intentionally merge).</li>
+        <li>Base model identifier and exact revision / commit hash.</li>
+        <li>Tokenizer files and chat template used for training.</li>
+        <li>Training and validation dataset version identifiers or secure references.</li>
+        <li>Training configuration, software versions, seed, hardware, metrics and checkpoints.</li>
+        <li>Evaluation report, known limitations, license and deployment instructions.</li>
+      </ul>
+    </section>
+
+
+      <h3>10.8 Load the saved LoRA adapter for inference</h3>
+      <p>Training produces an adapter artifact. At inference time, load the compatible base model first, then attach the saved adapter. The base model revision, tokenizer, and chat template must match the training setup.</p>
+      <div class="code-label"><span>inference.py · Load and query the adapter</span></div>
+      <pre><code>import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+
+BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+ADAPTER_DIR = "./outputs/support-ticket-lora"
+
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID)
+base_model = AutoModelForCausalLM.from_pretrained(
+    BASE_MODEL_ID,
+    torch_dtype="auto",
+    device_map="auto",
+)
+model = PeftModel.from_pretrained(base_model, ADAPTER_DIR)
+model.eval()
+
+messages = [
+    {"role": "system", "content": "Classify the support ticket. Return JSON only."},
+    {"role": "user", "content": "I was charged twice for my subscription."},
+]
+
+prompt = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True,
+)
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+with torch.no_grad():
+    output_ids = model.generate(
+        **inputs,
+        max_new_tokens=120,
+        do_sample=False,
+    )
+
+new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
+print(tokenizer.decode(new_tokens, skip_special_tokens=True))</code></pre>
+      <div class="callout warn"><strong>Inference compatibility check</strong> The adapter is not a standalone model. Keep the compatible base model and revision available. Validate the generated result with a JSON parser and application schema rather than assuming that training guarantees valid JSON.</div>
+    
+<section class="section" id="preference">
+      <div class="kicker">11 · Alignment methods</div>
+      <h2>11. Preference Tuning: RLHF and DPO</h2>
+      <h3>11.1 Why preference tuning?</h3>
+      <p>For many generation tasks, several answers may be factually acceptable, but one is more useful, concise, complete, polite, or aligned with policy. A single gold answer may not capture all of those nuances. Preference data records which answer is better for a given prompt.</p>
+      <div class="code-label"><span>Preference example — conceptual JSON</span><button class="copy" data-copy="pref-code">Copy</button></div>
+      <pre id="pref-code"><code>{
+  "prompt": "Explain why a data pipeline failed.",
+  "chosen": "The job failed because the source file was missing. The next step is to verify the upstream delivery and retry after the file arrives.",
+  "rejected": "The pipeline is broken. Try again."
+}</code></pre>
+      <h3>11.2 RLHF — Reinforcement Learning from Human Feedback</h3>
+      <p>A widely known RLHF pipeline contains three conceptual stages:</p>
+      <ol>
+        <li><strong>SFT warm start:</strong> train the pretrained model on demonstrations of desired responses.</li>
+        <li><strong>Reward model:</strong> collect human rankings of candidate responses and train a model to score response quality.</li>
+        <li><strong>Reinforcement learning:</strong> optimize the language model to produce responses with higher reward while constraining it from drifting too far from a reference model.</li>
+      </ol>
+      <figure class="diagram">
+        <svg viewBox="0 0 920 290" role="img" aria-label="RLHF pipeline from demonstrations to reward model to policy optimization">
+          <defs><marker id="arr6" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="20" y="65" width="190" height="125" rx="13" fill="#eaf0ff" stroke="#7893e5"/><text x="115" y="96" text-anchor="middle" font-size="16" font-weight="700" fill="#1d367b">Human demonstrations</text><text x="115" y="125" text-anchor="middle" font-size="12" fill="#3d4d70">Prompt + ideal answer</text><text x="115" y="145" text-anchor="middle" font-size="12" fill="#3d4d70">used for SFT</text>
+          <path d="M212 127 H255" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr6)"/>
+          <rect x="263" y="65" width="190" height="125" rx="13" fill="#e7f7f7" stroke="#48a5ab"/><text x="358" y="96" text-anchor="middle" font-size="16" font-weight="700" fill="#075e68">SFT policy</text><text x="358" y="125" text-anchor="middle" font-size="12" fill="#315c64">Initial instruction-</text><text x="358" y="145" text-anchor="middle" font-size="12" fill="#315c64">following model</text>
+          <path d="M455 127 H498" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr6)"/>
+          <rect x="506" y="65" width="190" height="125" rx="13" fill="#fff5df" stroke="#d5a642"/><text x="601" y="96" text-anchor="middle" font-size="16" font-weight="700" fill="#805200">Reward model</text><text x="601" y="125" text-anchor="middle" font-size="12" fill="#6e5a36">Learns from human</text><text x="601" y="145" text-anchor="middle" font-size="12" fill="#6e5a36">preferences / rankings</text>
+          <path d="M698 127 H741" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr6)"/>
+          <rect x="749" y="65" width="150" height="125" rx="13" fill="#f0ecff" stroke="#9a83d8"/><text x="824" y="96" text-anchor="middle" font-size="16" font-weight="700" fill="#513c93">RL update</text><text x="824" y="125" text-anchor="middle" font-size="12" fill="#514773">Optimize model</text><text x="824" y="145" text-anchor="middle" font-size="12" fill="#514773">against reward</text>
+          <text x="460" y="235" text-anchor="middle" font-size="12" fill="#5d687b">Simplified conceptual pipeline; implementations differ in objective and optimization details.</text>
+          <text x="115" y="45" text-anchor="middle" font-size="11" fill="#5d687b">Step 1</text><text x="358" y="45" text-anchor="middle" font-size="11" fill="#5d687b">Step 2</text><text x="601" y="45" text-anchor="middle" font-size="11" fill="#5d687b">Step 3</text><text x="824" y="45" text-anchor="middle" font-size="11" fill="#5d687b">Step 4</text>
+        </svg>
+        <figcaption>Figure 6. Simplified RLHF training flow.</figcaption>
+      </figure>
+      <h3>11.3 DPO — Direct Preference Optimization</h3>
+      <p>DPO trains directly on preferred and dispreferred responses using a preference objective. In its original formulation, it uses a reference policy and transforms the preference-learning problem into a classification-like loss. This avoids the need to separately fit a reward model and run an online RL optimization loop in the standard way.</p>
+      <p>Conceptually, DPO increases the relative likelihood of the chosen response over the rejected response for the same prompt, while controlling deviation relative to a reference model.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Dimension</th><th>Classic RLHF-style pipeline</th><th>DPO</th></tr></thead>
+        <tbody><tr><td>Data</td><td>Demonstrations, rankings / preferences, reward targets</td><td>Prompt, chosen response, rejected response</td></tr><tr><td>Reward model</td><td>Commonly trained as a separate stage</td><td>No separate reward model required in the standard DPO method</td></tr><tr><td>Optimization</td><td>Often a reinforcement learning algorithm such as PPO</td><td>Direct preference objective</td></tr><tr><td>Trade-off</td><td>Flexible but can be more complex to operate</td><td>Often simpler, but still sensitive to data quality and hyperparameters</td></tr></tbody>
+      </table></div>
+      <p>Preference tuning is not a substitute for factual grounding or task-specific correctness checks. A preference dataset can teach an answer style while unintentionally rewarding confident but incorrect outputs if annotators or reward criteria are weak.</p>
+    </section>
+
+    <section class="section" id="evaluation">
+      <div class="kicker">12 · Measurement</div>
+      <h2>12. Evaluating a Fine-Tuned Model</h2>
+      <p>Always evaluate the fine-tuned model against at least the base model with a production-representative prompt, and ideally against the current production system. Do not use training loss alone to decide whether the fine-tune is successful.</p>
+      <h3>12.1 Evaluation dimensions</h3>
+      <div class="grid2">
+        <div class="mini-card"><h4>Task quality</h4><p>Accuracy, precision, recall, F1, exact match, schema validity, code tests, or task-specific correctness.</p></div>
+        <div class="mini-card"><h4>Generation quality</h4><p>Faithfulness, relevance, completeness, clarity, tone, style and instruction following.</p></div>
+        <div class="mini-card"><h4>Robustness</h4><p>Unseen phrasing, typos, ambiguity, long inputs, edge cases, adversarial prompts and distribution shift.</p></div>
+        <div class="mini-card"><h4>Safety and privacy</h4><p>PII leakage, secret reproduction, unsafe responses, over-refusal, policy compliance and prompt-injection resilience.</p></div>
+        <div class="mini-card"><h4>Operational metrics</h4><p>Latency, tokens per second, GPU memory, throughput, failure rate, serving cost and uptime.</p></div>
+        <div class="mini-card"><h4>Retention</h4><p>Check that useful general capabilities have not degraded after narrow-domain training.</p></div>
+      </div>
+      <h3>12.2 Classification metrics</h3>
+      <p>For classification or extraction tasks with reference labels, use deterministic metrics whenever possible.</p>
+      <div class="math">Precision = TP / (TP + FP) &nbsp;&nbsp; Recall = TP / (TP + FN)</div>
+      <div class="math">F1 = 2 × (Precision × Recall) / (Precision + Recall)</div>
+      <p>Accuracy is useful when classes are reasonably balanced. For rare important classes, precision, recall, F1, per-class results, and a confusion matrix are usually more informative.</p>
+      <h3>12.3 Generative-task evaluation</h3>
+      <p>Many correct answers can have different wording. Exact string matching is then too strict. Use a rubric covering factual correctness, relevance, evidence use, format, and completeness. Combine deterministic checks, expert human review, and model-based graders when appropriate. Calibrate model graders against human judgments because graders can also be biased or inconsistent.</p>
+      <h3>12.4 A/B and paired comparison</h3>
+      <p>Run the same held-out prompts through the base and fine-tuned models under controlled decoding settings. Compare outputs side by side, ideally blind to model identity. For production, use a staged rollout or shadow traffic before replacing the current model.</p>
+      <h3>12.5 Minimum experiment report</h3>
+      <ul class="checklist">
+        <li>Base model and exact revision documented.</li>
+        <li>Training, validation and test set versions recorded.</li>
+        <li>Task metrics compared to the base model and production baseline.</li>
+        <li>Representative qualitative examples reviewed by humans.</li>
+        <li>Safety, privacy, and capability-retention tests completed.</li>
+        <li>Latency, hardware footprint and cost measured.</li>
+        <li>Known failure cases, rollback plan and release owner documented.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="deployment">
+      <div class="kicker">13 · Production</div>
+      <h2>13. Deploying and Operating a Fine-Tuned Model</h2>
+      <h3>13.1 Adapter versus merged model</h3>
+      <p>With PEFT, the fine-tuned artifact is often an adapter that is loaded alongside its compatible base model. This makes it possible to keep multiple task-specific adapters for one base model. Some workflows merge the adapter update into the base weights to simplify serving. Merging may affect quantization and storage choices, so test the final artifact using the intended inference stack.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Deployment style</th><th>Advantages</th><th>Considerations</th></tr></thead>
+        <tbody><tr><td>Base model + adapter</td><td>Small task-specific artifact; can swap supported adapters.</td><td>Serve the exact compatible base model and adapter; runtime must support PEFT.</td></tr><tr><td>Merged model</td><td>Can simplify serving with engines expecting standalone model weights.</td><td>Larger artifact; merging and quantization may need extra validation.</td></tr></tbody>
+      </table></div>
+      <h3>13.2 Production architecture</h3>
+      <figure class="diagram">
+        <svg viewBox="0 0 930 325" role="img" aria-label="Application inference architecture for a fine-tuned LLM">
+          <defs><marker id="arr7" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#65789c"/></marker></defs>
+          <rect x="20" y="115" width="145" height="80" rx="12" fill="#edf1f8" stroke="#8795ad"/><text x="92" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#26344d">Client / UI</text><text x="92" y="171" text-anchor="middle" font-size="11" fill="#536077">User request</text>
+          <path d="M167 155 H210" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr7)"/>
+          <rect x="218" y="115" width="160" height="80" rx="12" fill="#eaf0ff" stroke="#7893e5"/><text x="298" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#1d367b">API / Gateway</text><text x="298" y="171" text-anchor="middle" font-size="11" fill="#3d4d70">Auth • rate limits</text>
+          <path d="M380 155 H423" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr7)"/>
+          <rect x="431" y="115" width="165" height="80" rx="12" fill="#e7f7f7" stroke="#48a5ab"/><text x="513" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#075e68">Inference service</text><text x="513" y="171" text-anchor="middle" font-size="11" fill="#315c64">Template • tokenize</text>
+          <path d="M598 155 H641" stroke="#65789c" stroke-width="2.5" marker-end="url(#arr7)"/>
+          <rect x="649" y="115" width="250" height="80" rx="12" fill="#fff5df" stroke="#d5a642"/><text x="774" y="148" text-anchor="middle" font-size="15" font-weight="700" fill="#805200">Fine-tuned model</text><text x="774" y="171" text-anchor="middle" font-size="11" fill="#6e5a36">Base model + adapter / merged weights</text>
+          <rect x="250" y="20" width="200" height="60" rx="11" fill="#f0ecff" stroke="#9a83d8"/><text x="350" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#513c93">Observability</text><text x="350" y="63" text-anchor="middle" font-size="11" fill="#514773">Quality • latency • cost</text>
+          <path d="M350 82 V107" stroke="#65789c" stroke-width="1.8" stroke-dasharray="4 4" marker-end="url(#arr7)"/>
+          <rect x="455" y="238" width="250" height="65" rx="11" fill="#eaf0ff" stroke="#7893e5"/><text x="580" y="264" text-anchor="middle" font-size="13" font-weight="700" fill="#1d367b">Optional retrieval / tools</text><text x="580" y="283" text-anchor="middle" font-size="11" fill="#3d4d70">Current facts • controlled actions</text>
+          <path d="M513 197 V230" stroke="#65789c" stroke-width="1.8" stroke-dasharray="4 4" marker-end="url(#arr7)"/>
+        </svg>
+        <figcaption>Figure 7. Fine-tuning is one component in a secure production application.</figcaption>
+      </figure>
+      <h3>13.3 Versioning and reproducibility</h3>
+      <p>Treat the model like a software release. Version the base model, adapter, dataset, tokenizer, chat template, inference parameters, and evaluation report. Record the environment and package versions. Store large artifacts in a controlled registry or object store and apply access policies.</p>
+      <h3>13.4 Monitoring</h3>
+      <ul>
+        <li><strong>Quality:</strong> sample outputs, user corrections, escalation rates, and task-specific success metrics.</li>
+        <li><strong>Drift:</strong> changing input patterns, new product names, new document types, or language shifts.</li>
+        <li><strong>Operations:</strong> latency percentiles, throughput, memory, GPU utilization, error rates, and cost per request.</li>
+        <li><strong>Safety:</strong> unexpected disclosures, refusal behavior, prompt injection, and policy violations.</li>
+      </ul>
+      <h3>13.5 Rollback</h3>
+      <p>Keep the previous model version available. Define objective rollback triggers before rollout, such as a drop in high-priority class recall, unacceptable format failure rate, elevated latency, or a safety regression. The serving layer should be able to route traffic back to the known-good version.</p>
+    </section>
+
+    <section class="section" id="pitfalls">
+      <div class="kicker">14 · Troubleshooting</div>
+      <h2>14. Common Fine-Tuning Problems and Fixes</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Symptom</th><th>Likely cause</th><th>What to investigate</th></tr></thead>
+        <tbody>
+          <tr><td>Training loss does not decrease</td><td>Bad format, wrong labels, unsuitable learning rate, incorrect masking, broken chat template, or optimizer setup.</td><td>Print a fully rendered example, inspect token IDs and labels, run a tiny overfit test on a few examples, then check the learning rate and gradients.</td></tr>
+          <tr><td>Training loss falls but validation worsens</td><td>Overfitting, narrow data distribution, too many epochs, leakage in training, or train/eval mismatch.</td><td>Reduce epochs, improve diversity, check split design, use early stopping and inspect held-out examples.</td></tr>
+          <tr><td>Model ignores requested JSON format</td><td>Inconsistent examples, invalid targets, chat-template mismatch, or weak schema coverage.</td><td>Validate every target, add varied valid/invalid edge cases, use constrained decoding or schema validation where possible.</td></tr>
+          <tr><td>Model becomes too verbose / too terse</td><td>Response-length distribution in training data does not match desired behavior.</td><td>Audit examples by response length; rebalance and add explicit target-style examples.</td></tr>
+          <tr><td>Model over-refuses</td><td>Refusal examples are overrepresented or safety labels are inconsistent.</td><td>Review refusal distribution and add valid benign requests with appropriate helpful responses.</td></tr>
+          <tr><td>Model confidently invents missing facts</td><td>Targets reward unsupported completion or examples omit uncertainty behavior.</td><td>Teach abstention and clarification; use RAG for factual evidence; test questions with insufficient context.</td></tr>
+          <tr><td>CUDA out-of-memory</td><td>Model too large, sequences too long, batch size too high, optimizer state or activation memory too large.</td><td>Use LoRA/QLoRA, reduce sequence length or micro-batch, use gradient accumulation, checkpointing, and efficient attention where supported.</td></tr>
+          <tr><td>Adapter has little effect</td><td>Wrong target modules, too little training, weak data signal, wrong adapter loaded, or low rank/capacity.</td><td>Verify trainable parameter count, adapter injection, loss masking, model/adapter compatibility and output differences.</td></tr>
+          <tr><td>General capability degrades</td><td>Catastrophic forgetting or overly aggressive updates.</td><td>Use smaller learning rate, fewer epochs, more representative examples, PEFT, and capability-retention evaluation.</td></tr>
+          <tr><td>Good offline result, poor production result</td><td>Evaluation distribution differs from live inputs; inference template or settings differ; retrieval/tool context is missing.</td><td>Replay production-shaped inputs, align templates and decoding settings, add shadow traffic and monitor drift.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>A useful debugging technique: overfit a tiny sample</h3>
+      <p>Before launching a large training job, try training on a very small subset. The model should be able to drive training loss down substantially and reproduce those examples. If it cannot, suspect data formatting, labels, tokenization, loss masking, adapter injection, or the training loop before collecting more data.</p>
+    </section>
+
+    <section class="section" id="case-study">
+      <div class="kicker">15 · Worked example</div>
+      <h2>15. Example: Fine-Tuning a DataOps Incident Assistant</h2>
+      <p>Consider an internal assistant that classifies pipeline failures and returns a consistent triage summary. This example is illustrative; it does not assume access to any real organization’s data.</p>
+      <h3>Problem statement</h3>
+      <p>Inputs are incident descriptions such as “SFTP delivery missing”, “database connection timed out”, or “schema mismatch after deployment”. The assistant should return a structured category, priority, likely next check, and escalation flag.</p>
+      <h3>Choose the architecture</h3>
+      <ul>
+        <li>Fine-tuning teaches the incident taxonomy, terminology, response format, and triage style.</li>
+        <li>RAG retrieves the latest runbooks, dependency maps, and service ownership information.</li>
+        <li>Tools perform controlled read-only checks, such as querying job status or retrieving logs.</li>
+        <li>Authorization is enforced by the application, not by the model's text response.</li>
+      </ul>
+      <h3>Example input and output</h3>
+      <div class="grid2">
+        <div class="mini-card"><h4>Input</h4><p>“The hourly ingestion DAG failed because the upstream SFTP file was not present. The next run is in 40 minutes.”</p></div>
+        <div class="mini-card"><h4>Target output</h4><p><code>{"category":"source_delivery","priority":"high","next_check":"Confirm upstream delivery and expected file name","escalate":false}</code></p></div>
+      </div>
+      <h3>Dataset design</h3>
+      <p>Collect reviewed examples across the major categories: source delivery, connectivity, credentials, schema, data quality, resource exhaustion, orchestration, and unknown/ambiguous. Include examples that should not be automatically classified when evidence is insufficient.</p>
+      <h3>Evaluation design</h3>
+      <p>Use per-class precision and recall, JSON parse success, correctness of the next check, and the rate at which the assistant escalates uncertain cases. Include unseen pipeline names, different error phrasings, and deliberately ambiguous incidents.</p>
+      <h3>What success looks like</h3>
+      <p>The fine-tuned model improves the target task without increasing unsafe automation. It produces the schema reliably, recognizes uncertainty, and does not claim that it checked a production system unless a real authorized tool returned that result.</p>
+    </section>
+
+    <section class="section" id="checklist">
+      <div class="kicker">16 · Quick reference</div>
+      <h2>16. Practical Fine-Tuning Checklist</h2>
+      <h3>Before training</h3>
+      <ul class="checklist">
+        <li>The problem is a behavior / skill problem, not just a need for fresh factual knowledge.</li>
+        <li>Prompt engineering and a baseline have been tested first.</li>
+        <li>Success metrics and a held-out evaluation set exist.</li>
+        <li>Base model license, data rights, and deployment conditions have been reviewed.</li>
+        <li>Training examples are correct, diverse, consistent and representative.</li>
+        <li>Train / validation / test splits avoid duplicates and leakage.</li>
+        <li>Tokenization, chat template, target modules and hardware are understood.</li>
+      </ul>
+      <h3>During training</h3>
+      <ul class="checklist">
+        <li>Loss, validation metrics, learning rate, GPU memory and training speed are monitored.</li>
+        <li>Checkpoints and experiment metadata are saved.</li>
+        <li>A small-sample overfit test succeeds before scaling up.</li>
+        <li>Training is stopped or adjusted when validation quality degrades.</li>
+      </ul>
+      <h3>Before production</h3>
+      <ul class="checklist">
+        <li>The candidate beats the base model on the actual target metric.</li>
+        <li>General capability, safety, privacy and regression tests pass.</li>
+        <li>Inference uses the correct tokenizer, chat template and adapter/base pairing.</li>
+        <li>Latency, throughput, memory use and total serving cost are acceptable.</li>
+        <li>Versioning, monitoring, staged rollout and rollback are ready.</li>
+      </ul>
+    </section>
+
+    
+    <section class="section" id="lora-deep-dive">
+      <div class="kicker">17 · Advanced parameter efficiency</div>
+      <h2>17. LoRA and QLoRA: Technical Deep Dive</h2>
+      <p class="lead">This chapter adds the parameter-count intuition, adapter-placement choices, and quantization details that help explain why LoRA and QLoRA can reduce the cost of adapting large models.</p>
+
+      <h3>17.1 Understand the parameter-count reduction</h3>
+      <p>Suppose a dense layer has a pretrained weight matrix <code>W</code> with dimensions <code>d_out × d_in</code>. Full fine-tuning can update every entry. LoRA represents the update using two smaller matrices whose inner dimension is the rank <code>r</code>:</p>
+      <div class="math">A ∈ ℝ<sup>r × d<sub>in</sub></sup> &nbsp;&nbsp; B ∈ ℝ<sup>d<sub>out</sub> × r</sup></div>
+      <div class="math">LoRA trainable parameters = r × d<sub>in</sub> + d<sub>out</sub> × r = r(d<sub>in</sub> + d<sub>out</sub>)</div>
+      <p><strong>Worked example:</strong> a 4096 × 4096 dense matrix contains 16,777,216 weights. A rank-8 LoRA update uses 8 × (4096 + 4096) = 65,536 trainable values for that matrix pair. This is approximately 256 times fewer trainable values for that layer update. The total adapter still depends on how many modules receive LoRA layers.</p>
+
+      <h3>17.2 Where can LoRA adapters be attached?</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Target module</th><th>What it influences</th><th>Practical consideration</th></tr></thead>
+        <tbody>
+          <tr><td>Query / key projections</td><td>Attention matching and which information tokens attend to</td><td>Common adaptation targets in transformer attention layers.</td></tr>
+          <tr><td>Value / output projections</td><td>Information carried through the attention operation</td><td>Often included with query and key projections.</td></tr>
+          <tr><td>MLP / feed-forward projections</td><td>Feed-forward transformations within transformer blocks</td><td>Adding these modules increases adapter capacity and resource use.</td></tr>
+          <tr><td>Embedding / output layers</td><td>Token representations or vocabulary output mapping</td><td>More specialized; verify model and PEFT support before targeting them.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Names such as <code>q_proj</code>, <code>k_proj</code>, <code>v_proj</code>, and <code>o_proj</code> are architecture conventions, not universal names. Inspect the model's module tree and check its fine-tuning guidance rather than copying a target-module list blindly.</p>
+
+      <h3>17.3 Tune rank, alpha, dropout, and target modules together</h3>
+      <ul>
+        <li><strong>Rank (<code>r</code>):</strong> controls the dimensionality and capacity of the low-rank update. A larger rank adds trainable parameters and compute.</li>
+        <li><strong>Alpha (<code>lora_alpha</code>):</strong> scales the adapter contribution. A common scaling form is related to <code>alpha / rank</code>, though LoRA variants may use different rules.</li>
+        <li><strong>Dropout (<code>lora_dropout</code>):</strong> regularizes the adapter path in supported implementations and may help in small-data settings.</li>
+        <li><strong>Target modules:</strong> determine where adapters are inserted. More target layers can add capacity but also increase memory and change optimization behavior.</li>
+      </ul>
+      <p>Do not tune rank in isolation. Compare a small set of adapter configurations using the same dataset, training budget, and held-out evaluation suite.</p>
+
+      <h3>17.4 What QLoRA quantizes—and what it does not</h3>
+      <p>In the common QLoRA design, pretrained base weights are stored in a low-bit representation, often 4-bit, and remain frozen. LoRA adapter parameters are trainable at a suitable higher precision. During the forward computation, quantized weight blocks may be dequantized into a supported compute dtype as needed. Therefore, “4-bit fine-tuning” does <strong>not</strong> mean every operation, gradient, activation, and trainable parameter is represented in 4 bits.</p>
+      <ul>
+        <li><strong>NF4:</strong> a 4-bit data type designed for normally distributed model weights.</li>
+        <li><strong>Double quantization:</strong> quantizes quantization constants to reduce the memory overhead associated with storing them.</li>
+        <li><strong>Paged optimizers:</strong> in supported implementations, help manage memory spikes by using paging mechanisms.</li>
+      </ul>
+      <div class="callout warn"><strong>Important distinction</strong> QLoRA reduces memory used to store the frozen base weights. It does not eliminate activation memory, long-context attention cost, or the need for compatible kernels and hardware. A long sequence can still cause an out-of-memory failure with QLoRA.</div>
+
+      <h3>17.5 Saving, merging, and distributing adapters</h3>
+      <ul>
+        <li>An adapter checkpoint usually contains adapter weights and configuration, not a full duplicate of the pretrained base model.</li>
+        <li>Inference requires a compatible base-model revision, tokenizer, chat template, and adapter configuration.</li>
+        <li>Some supported workflows can merge LoRA updates into the base weights to simplify serving. Check whether the architecture and quantization mode support the intended merge operation.</li>
+        <li>Keep the original adapter artifact even after creating a merged checkpoint; it supports reproducibility, comparison, and rollback.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="dataset-advanced">
+      <div class="kicker">18 · Data design and governance</div>
+      <h2>18. Advanced Dataset Engineering</h2>
+      <p class="lead">A dataset should encode a consistent behavior specification and cover the range of inputs the production model will encounter—not merely contain many examples.</p>
+
+      <h3>18.1 Write a behavior specification before creating examples</h3>
+      <p>Give annotators and reviewers a short, stable specification. Define:</p>
+      <ul>
+        <li>The task and the inputs available to the model.</li>
+        <li>Allowed output values, required fields, format, and tone.</li>
+        <li>How the model should express uncertainty, ask for clarification, or abstain.</li>
+        <li>Refusal and escalation rules, including borderline examples.</li>
+        <li>What counts as a correct, partially correct, or unacceptable answer.</li>
+      </ul>
+      <p>This reduces contradictory labels and makes future dataset revisions easier to review.</p>
+
+      <h3>18.2 Use a coverage matrix to expose gaps</h3>
+      <p>For a support-ticket classifier, define input dimensions before sampling records. The following is an illustrative coverage matrix:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Dimension</th><th>Coverage examples</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Ticket category</td><td>Billing, technical, account access, delivery, cancellation, other</td><td>Checks that important categories are represented.</td></tr>
+          <tr><td>Priority</td><td>Low, medium, high, urgent—with explicit definitions</td><td>Reduces label drift between annotators.</td></tr>
+          <tr><td>Input quality</td><td>Clear, incomplete, misspelled, multilingual, contradictory</td><td>Tests behavior on realistic, imperfect inputs.</td></tr>
+          <tr><td>Conversation state</td><td>First message, follow-up, correction, reopened issue</td><td>Tests use of conversation history.</td></tr>
+          <tr><td>Boundary cases</td><td>Out-of-scope requests and unclear cases needing escalation</td><td>Teaches the model when not to force a classification.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Balance the dataset deliberately. Do not allow the largest or easiest-to-collect category to dominate without checking whether that reflects the production distribution and the task's risk profile.</p>
+
+      <h3>18.3 Negative examples and rejected responses</h3>
+      <p>Ordinary SFT generally trains on desired completions. A rejected answer should not simply be mixed into the SFT targets as though it were correct. Negative examples are useful when represented in a training objective designed for them—for example, chosen/rejected pairs for DPO or scored candidates for reward-based optimization.</p>
+      <p>A useful rejected response is plausible but inferior for a specific reason, such as being incomplete, unsupported, incorrectly formatted, or missing an escalation. Avoid obviously nonsensical rejected answers that teach little about the real decision boundary.</p>
+
+      <h3>18.4 Synthetic data: use it as candidate data</h3>
+      <p>LLM-generated examples can expand coverage, create paraphrases, and produce candidate edge cases. However, synthetic data may inherit the generator's errors, biases, style, and blind spots. A practical review pipeline is:</p>
+      <ol class="step-list">
+        <li>Generate candidate examples from a written task specification.</li>
+        <li>Apply deterministic checks wherever possible, such as JSON parsing, allowed-label validation, and field constraints.</li>
+        <li>Use independent model review or expert review for semantic correctness.</li>
+        <li>Deduplicate against existing training data and held-out evaluation cases.</li>
+        <li>Record provenance so human-authored and synthetic data can be analyzed separately.</li>
+      </ol>
+
+      <h3>18.5 Measure annotation agreement</h3>
+      <p>For subjective labels, ask multiple annotators to label a subset of examples. Measure agreement and inspect disagreements. If experts disagree because the guideline is ambiguous, revise the guideline and resolve the policy before scaling annotation. A model cannot reliably learn a crisp decision boundary from inconsistent labels unless the ambiguity is explicitly represented and handled.</p>
+
+      <h3>18.6 How much data is enough?</h3>
+      <p>There is no universal data-count threshold. The supplemental notes suggest that a narrow first experiment may begin with dozens to a few hundred carefully reviewed examples, then expand based on measured error patterns. This is a starting heuristic, not a guarantee or a rule for broad tasks. More diverse examples are usually needed for long-tail coverage, multiple languages, broad task definitions, or high reliability requirements.</p>
+      <p>Use a <strong>learning curve</strong>: train or evaluate with increasing dataset sizes and plot held-out quality against the number of examples. If performance is still improving materially, more relevant data may help. If it has plateaued, investigate label quality, model capacity, task definition, or the evaluation setup.</p>
+
+      <h3>18.7 Version the dataset as an engineering artifact</h3>
+      <p>Preserve the raw source, normalized examples, transformation code, label schema, train/validation/test assignments, and quality-review status. Record why examples were added or removed. Dataset hashes or immutable version identifiers help distinguish a model change from a data change when experiment results differ.</p>
+    </section>
+
+    <section class="section" id="compute-ops">
+      <div class="kicker">19 · Training infrastructure</div>
+      <h2>19. Compute Planning and Training Operations</h2>
+      <h3>19.1 What consumes GPU memory?</h3>
+      <p>Training memory is not just the model weights. A useful mental model includes:</p>
+      <ul>
+        <li><strong>Parameters:</strong> model weights and trainable adapter weights.</li>
+        <li><strong>Gradients:</strong> gradient tensors for trainable parameters.</li>
+        <li><strong>Optimizer state:</strong> for example, first and second moments maintained by Adam-like optimizers.</li>
+        <li><strong>Activations:</strong> intermediate tensors retained for backpropagation. Batch size and sequence length strongly affect this component.</li>
+        <li><strong>Temporary workspace:</strong> attention kernels, communication buffers, and allocator overhead.</li>
+      </ul>
+      <p>PEFT substantially reduces trainable parameters, gradients, and optimizer state. It does not remove the need to run the frozen transformer through the forward path or retain/recompute activations. Long context can therefore remain expensive even when using LoRA.</p>
+
+      <h3>19.2 Techniques for fitting a training run into hardware</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Technique</th><th>What it helps with</th><th>Trade-off / caution</th></tr></thead>
+        <tbody>
+          <tr><td>Mixed precision (BF16 / FP16)</td><td>Can reduce memory use and improve throughput.</td><td>Hardware support and numerical stability matter; BF16 and FP16 are not interchangeable on every setup.</td></tr>
+          <tr><td>Gradient accumulation</td><td>Builds a larger effective batch from smaller micro-batches.</td><td>More forward/backward passes occur before an optimizer update and throughput may change.</td></tr>
+          <tr><td>Gradient checkpointing</td><td>Reduces activation memory.</td><td>Some forward computations are repeated during backpropagation, increasing compute time.</td></tr>
+          <tr><td>Quantized base weights</td><td>Reduces memory needed to store a frozen base model.</td><td>Requires compatible kernels and backends; may involve performance or quality trade-offs.</td></tr>
+          <tr><td>Shorter sequence length</td><td>Reduces activation and attention costs.</td><td>May remove important context or truncate the target answer.</td></tr>
+          <tr><td>Distributed training</td><td>Shares data, model components, or model state across devices.</td><td>Adds communication, configuration, and debugging complexity.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>19.3 Data parallelism versus model sharding</h3>
+      <p><strong>Data parallelism:</strong> model replicas process different batches and synchronize gradients. Each device works on a different portion of the batch.</p>
+      <p><strong>Model sharding:</strong> different parts of the model or its training states are distributed across devices. Frameworks may combine data parallelism with tensor, pipeline, or fully sharded approaches.</p>
+      <p>For a small LoRA experiment, a single GPU may be easier to configure and debug. Larger models may require distributed strategies. Choose the simplest setup that satisfies memory and throughput requirements.</p>
+
+      <h3>19.4 Reproducibility metadata</h3>
+      <p>Record the random seed, exact base-model revision, dataset version or hash, tokenizer, chat template, training-code revision, package versions, hardware, precision, optimizer, scheduler, and all trainer arguments. Bitwise reproducibility may not be possible across hardware and kernels, but complete run metadata makes comparisons much more defensible.</p>
+    </section>
+
+    <section class="section" id="evaluation-advanced">
+      <div class="kicker">20 · Evaluation design</div>
+      <h2>20. Advanced Evaluation: Beyond One Aggregate Score</h2>
+      <h3>20.1 Build an evaluation matrix</h3>
+      <p>Organize the held-out test set into slices that represent capability, input quality, and risk. For a ticket classifier, an evaluation matrix could include:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Test slice</th><th>Example</th><th>What it reveals</th></tr></thead>
+        <tbody>
+          <tr><td>Common cases</td><td>Clear billing complaint</td><td>Core task performance.</td></tr>
+          <tr><td>Rare classes</td><td>Account takeover concern</td><td>Long-tail performance.</td></tr>
+          <tr><td>Ambiguous inputs</td><td>“It doesn't work”</td><td>Uncertainty and escalation behavior.</td></tr>
+          <tr><td>Conflicting context</td><td>Customer corrects earlier details</td><td>Conversation-state handling.</td></tr>
+          <tr><td>Adversarial instructions</td><td>Ticket text asks the model to ignore classification rules</td><td>Instruction hierarchy robustness.</td></tr>
+          <tr><td>Format stress</td><td>Long text, quotes, braces, unusual characters</td><td>Parser and schema reliability.</td></tr>
+          <tr><td>Out-of-scope requests</td><td>General product advice request</td><td>Boundary handling and appropriate abstention.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Report both the overall metric and the per-slice results. An aggregate score can hide a serious regression in a rare but high-impact category.</p>
+
+      <h3>20.2 Sample size and confidence intervals</h3>
+      <p>A metric measured on a small test set is uncertain. For example, 90% accuracy on 50 cases can move substantially when only a few predictions change. Report the number of evaluated examples and, when the decision warrants it, an uncertainty interval around the measured score. A Wilson interval is often preferable to a simple normal approximation for a binomial proportion, particularly with small samples or scores near 0% or 100%.</p>
+      <div class="callout warn"><strong>Interpret small benchmark gains carefully</strong> A two-point improvement on a small test set may be noise rather than a real quality gain. Use a representative sample size, compare the same examples, and consider the practical impact of the errors—not only the point estimate.</div>
+
+      <h3>20.3 Pairwise human evaluation</h3>
+      <p>For subjective outputs, show reviewers two anonymized responses to the same prompt. Randomize the order and ask which response is better under a defined rubric. Include options such as <em>tie</em> and <em>both poor</em> when appropriate. Blind comparisons reduce brand or model-identity bias. Report preference rates alongside task-specific failure categories and reviewer agreement.</p>
+
+      <h3>20.4 LLM-as-a-judge: useful, but not ground truth</h3>
+      <p>A model grader can scale evaluation, but it can prefer longer answers, share the candidate model's biases, miss subtle factual errors, or be influenced by which answer appears first. Improve reliability by:</p>
+      <ul>
+        <li>Using a fixed, explicit rubric with observable criteria.</li>
+        <li>Randomizing candidate order and testing for position bias.</li>
+        <li>Calibrating grader results against human judgments.</li>
+        <li>Auditing disagreements and periodically reviewing samples manually.</li>
+        <li>Preferring deterministic parsers, exact checks, and executable tests for objective requirements.</li>
+      </ul>
+
+      <h3>20.5 Define regression gates before deployment</h3>
+      <p>Require the candidate to meet minimum thresholds on the target task and stay within acceptable bounds for safety, general capability retention, formatting, and latency. A model that improves one metric but breaks a critical refusal, escalation, or tool-call behavior should not pass release approval.</p>
+    </section>
+
+    <section class="section" id="decision-framework">
+      <div class="kicker">21 · Choosing an approach</div>
+      <h2>21. Decision Framework: Which Adaptation Strategy Should You Try?</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Observed problem</th><th>First experiment</th><th>Escalate to</th></tr></thead>
+        <tbody>
+          <tr><td>Instructions are unclear or inconsistent</td><td>Improve the system prompt and add a few examples.</td><td>SFT if the same behavior gap persists across a repeated workload.</td></tr>
+          <tr><td>Model lacks current or private facts</td><td>RAG or structured database/tool access.</td><td>Fine-tuning only for stable behavior around using that information.</td></tr>
+          <tr><td>Repeated output-format failures</td><td>Schema-constrained output and application validation.</td><td>SFT with valid, malformed, and boundary examples if needed.</td></tr>
+          <tr><td>Domain terminology is unfamiliar</td><td>Provide context and test retrieval.</td><td>Continued pretraining for domain-language familiarity, or SFT when the gap is task behavior.</td></tr>
+          <tr><td>Correct answers have inconsistent style</td><td>Prompt examples and a style guide.</td><td>SFT or preference optimization using representative style judgments.</td></tr>
+          <tr><td>Model needs to optimize a verifiable outcome</td><td>Build and validate a reliable programmatic evaluator.</td><td>Reward-based fine-tuning after checking that the reward cannot be easily gamed.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout good"><strong>Decision rule</strong> Fine-tuning is justified when there is a repeated behavior gap, representative training signal, measurable held-out improvement, and enough expected value to offset training and maintenance cost.</div>
+    </section>
+
+    <section class="section" id="interview">
+      <div class="kicker">22 · Interview preparation</div>
+      <h2>22. LLM Fine-Tuning Interview Questions</h2>
+      <h3>Q1. What is fine-tuning?</h3>
+      <p>Additional training of a pretrained model on task-specific examples or feedback to adapt its parameters to a target task, domain, format, or behavior.</p>
+      <h3>Q2. What is the difference between pretraining and fine-tuning?</h3>
+      <p>Pretraining develops broad language and model capabilities from large-scale data. Fine-tuning starts from that pretrained model and adapts it to a narrower task or desired behavior.</p>
+      <h3>Q3. What is supervised fine-tuning (SFT)?</h3>
+      <p>SFT trains on input-target demonstrations, typically increasing the likelihood of the desired output tokens using a token-level cross-entropy objective.</p>
+      <h3>Q4. What is LoRA?</h3>
+      <p>LoRA is a parameter-efficient method that freezes the base weights and learns low-rank update matrices. This reduces the number of trainable parameters and the associated gradient and optimizer-state memory.</p>
+      <h3>Q5. What is the difference between LoRA and QLoRA?</h3>
+      <p>LoRA trains adapters while keeping the base model frozen, typically in its normal model precision. QLoRA additionally stores the frozen base weights in a quantized representation, commonly 4-bit, to reduce base-weight memory use.</p>
+      <h3>Q6. What is DPO, and how does it differ from SFT?</h3>
+      <p>SFT learns from a desired target answer. DPO learns from preference pairs such as a chosen and a rejected response, directly optimizing relative preferences without the separate reward-model stage used in conventional RLHF.</p>
+      <h3>Q7. When would you choose RAG instead of fine-tuning?</h3>
+      <p>Choose RAG when an application needs fresh, private, frequently changing, or source-citable information. Fine-tuning is generally better suited to stable behavior, style, and repeated task patterns.</p>
+      <h3>Q8. Why can training loss be misleading?</h3>
+      <p>Training loss measures how well the model fits its training targets. It does not prove generalization, factual correctness, safety, or user value. Held-out evaluation and regression tests are necessary.</p>
+      <h3>Q9. What is catastrophic forgetting?</h3>
+      <p>It is degradation of previously learned capabilities during further training, often associated with narrow data or overly aggressive parameter updates.</p>
+      <h3>Q10. How do you decide whether fine-tuning is worth the cost?</h3>
+      <p>Compare the tuned model with a strong prompt/application baseline on representative held-out data. Consider quality, safety, latency, and total cost, and fine-tune only when the measured benefit justifies the extra lifecycle complexity.</p>
+    </section>
+
+<section class="section" id="glossary">
+      <div class="kicker">23 · Terminology</div>
+      <h2>23. Glossary</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Base model</td><td>The pretrained model from which adaptation begins.</td></tr>
+          <tr><td>Foundation model</td><td>A broadly pretrained model intended to support many downstream tasks.</td></tr>
+          <tr><td>Fine-tuning</td><td>Additional training that adapts a pretrained model to a task, domain, or behavior.</td></tr>
+          <tr><td>Post-training</td><td>Training stages after broad pretraining, including SFT and alignment.</td></tr>
+          <tr><td>SFT</td><td>Supervised fine-tuning on input-output demonstrations.</td></tr>
+          <tr><td>PEFT</td><td>Parameter-Efficient Fine-Tuning; updates a small subset or extension of model parameters.</td></tr>
+          <tr><td>LoRA</td><td>Low-Rank Adaptation; learns low-rank weight updates while freezing the base weights.</td></tr>
+          <tr><td>QLoRA</td><td>LoRA training with a quantized, frozen base model.</td></tr>
+          <tr><td>Adapter</td><td>A small set of learned parameters that modifies a base model's behavior.</td></tr>
+          <tr><td>Quantization</td><td>Representing weights or activations with lower numerical precision to reduce memory and potentially improve inference efficiency.</td></tr>
+          <tr><td>Tokenizer</td><td>Converts text into token IDs and token IDs back into text.</td></tr>
+          <tr><td>Chat template</td><td>Model-specific formatting that encodes conversation roles and turn boundaries.</td></tr>
+          <tr><td>Epoch</td><td>One complete pass over a training dataset.</td></tr>
+          <tr><td>Learning rate</td><td>Controls the scale of parameter updates.</td></tr>
+          <tr><td>Gradient accumulation</td><td>Combines gradients from multiple micro-batches before an optimizer update.</td></tr>
+          <tr><td>Checkpoint</td><td>A saved state of a model during training.</td></tr>
+          <tr><td>Overfitting</td><td>Learning training examples too specifically, hurting performance on unseen data.</td></tr>
+          <tr><td>Catastrophic forgetting</td><td>Degradation of previously learned abilities during further training.</td></tr>
+          <tr><td>RLHF</td><td>Reinforcement Learning from Human Feedback.</td></tr>
+          <tr><td>DPO</td><td>Direct Preference Optimization; optimizes a model using chosen/rejected response preferences.</td></tr>
+          <tr><td>RAG</td><td>Retrieval-Augmented Generation; retrieves external information and adds it to the model's context.</td></tr>
+          <tr><td>Perplexity</td><td>A measure derived from language-model cross-entropy; lower is generally better for comparable token distributions, but it is not an end-task quality score.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="section" id="references">
+      <div class="kicker">24 · Further reading</div>
+      <h2>24. References and Current Tooling Notes</h2>
+      <p>The links below point to foundational papers and official documentation. Library APIs and hosted-provider availability can change, so check the current docs and pin compatible package versions before reproducing code.</p>
+      <ol class="reference-list">
+        <li><a href="https://huggingface.co/docs/peft/main/methods/overview" target="_blank" rel="noopener">Hugging Face PEFT — Method overview</a> — overview of parameter-efficient adaptation methods and trade-offs.</li>
+        <li><a href="https://huggingface.co/docs/peft/main/index" target="_blank" rel="noopener">Hugging Face PEFT documentation</a> — library concepts and integrations with Transformers and Accelerate.</li>
+        <li><a href="https://huggingface.co/docs/trl/sft_trainer" target="_blank" rel="noopener">Hugging Face TRL — SFTTrainer documentation</a> — current SFT dataset formats, configuration, chat templates, and assistant-only loss behavior.</li>
+        <li><a href="https://github.com/huggingface/trl/blob/main/docs/source/quickstart.md" target="_blank" rel="noopener">Hugging Face TRL quickstart</a> — examples for SFT, DPO, reward modeling and other post-training techniques.</li>
+        <li><a href="https://huggingface.co/docs/transformers/en/tasks/language_modeling" target="_blank" rel="noopener">Hugging Face Transformers — Causal language modeling</a> — tokenization, data collators, training and evaluation.</li>
+        <li><a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">LoRA: Low-Rank Adaptation of Large Language Models</a> — Hu et al., 2021.</li>
+        <li><a href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">QLoRA: Efficient Finetuning of Quantized LLMs</a> — Dettmers et al., 2023.</li>
+        <li><a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</a> — Rafailov et al., 2023.</li>
+        <li><a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Training language models to follow instructions with human feedback</a> — Ouyang et al., 2022; foundational InstructGPT / RLHF work.</li>
+        <li><a href="https://developers.openai.com/api/docs/guides/supervised-fine-tuning" target="_blank" rel="noopener">OpenAI — Supervised fine-tuning guide</a> — provider-specific data preparation, job workflow and evaluation guidance.</li>
+        <li><a href="https://developers.openai.com/api/docs/guides/fine-tuning-best-practices" target="_blank" rel="noopener">OpenAI — Fine-tuning best practices</a> — data quality, balance, consistency and hyperparameter iteration.</li>
+      </ol>
+      <div class="callout warn"><strong>Hosted-platform availability note (checked 30 October 2026)</strong> OpenAI's current fine-tuning documentation states that its fine-tuning platform is being wound down: it is no longer available to new users, while eligible existing customers can create jobs until 6 January 2027 unless a base model is deprecated earlier. This is a provider-specific availability notice, not a statement that fine-tuning as a technique is being discontinued. Check the live provider documentation before planning a hosted fine-tuning project.</div>
+      <p class="note">These notes are educational. They do not prescribe a universal model, hyperparameter set, dataset size, or infrastructure choice. Validate methods against the requirements, licensing, and deployment constraints of the project.</p>
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </section>
+  </main>
+</div>
+<footer class="footer">
+  <div class="footer-card" style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px">LLM Fine-Tuning — Complete merged learning notes · Updated 30 October 2026 · Includes diagrams, practical code, advanced dataset and compute guidance, evaluation strategy, and interview preparation. For print or PDF export, use your browser's <strong>Print → Save as PDF</strong> option.</div>
+</footer>
+<script>
+document.querySelectorAll('.copy').forEach((button)=>{
+  button.addEventListener('click', async ()=>{
+    const target=document.getElementById(button.dataset.copy);
+    if(!target) return;
+    const text=target.innerText;
+    try{await navigator.clipboard.writeText(text);button.textContent='Copied';setTimeout(()=>button.textContent='Copy',1400)}
+    catch(error){button.textContent='Select code';setTimeout(()=>button.textContent='Copy',1400)}
+  });
+});
+</script>
+</body>
+</html>
